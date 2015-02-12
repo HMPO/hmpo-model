@@ -1,0 +1,29 @@
+{
+  "name": "passports-model",
+  "version": "0.0.0",
+  "description": "Simple model for interacting with http/rest apis.",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha test/spec/ --recursive --require test/helper.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/UKHomeOffice/passports-model.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/UKHomeOffice/passports-model/issues"
+  },
+  "homepage": "https://github.com/UKHomeOffice/passports-model",
+  "dependencies": {
+    "concat-stream": "^1.4.7",
+    "underscore": "^1.7.0"
+  },
+  "devDependencies": {
+    "chai": "^1.10.0",
+    "mocha": "^2.1.0",
+    "sinon": "^1.12.2",
+    "sinon-chai": "^2.6.0"
+  }
+}
