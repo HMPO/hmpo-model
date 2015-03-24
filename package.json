@@ -4,7 +4,7 @@
   "description": "Simple model for interacting with http/rest apis.",
   "main": "index.js",
   "scripts": {
-    "test": "mocha test/spec/ --recursive --require test/helper.js"
+    "test": "eslint ./index.js && mocha test/spec/ --recursive --require test/helper.js"
   },
   "repository": {
     "type": "git",
@@ -22,6 +22,7 @@
   },
   "devDependencies": {
     "chai": "^1.10.0",
+    "eslint": "^0.17.1",
     "mocha": "^2.1.0",
     "sinon": "^1.12.2",
     "sinon-chai": "^2.6.0"

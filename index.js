@@ -81,7 +81,7 @@ _.extend(Model.prototype, {
         }.bind(this));
         request.on('error', function(e) {
             _callback(e);
-        }.bind(this));
+        });
         this.emit('sync', settings);
         if (settings.data) {
             request.write(settings.data);
