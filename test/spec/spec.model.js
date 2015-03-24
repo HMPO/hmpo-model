@@ -6,7 +6,7 @@ var Model = require('../../');
 
 describe('Model model', function () {
 
-    var model, cb, apiRequest, success;
+    var model, cb, apiRequest, success, fail;
 
     beforeEach(function () {
         model = new Model();
@@ -20,6 +20,13 @@ describe('Model model', function () {
             statusCode: 200,
             pipe: function (s) {
                 s.write('{ "message": "success" }');
+                s.end();
+            }
+        };
+        fail = {
+            statusCode: 500,
+            pipe: function (s) {
+                s.write('{ "message": "error" }');
                 s.end();
             }
         };
@@ -204,21 +211,7 @@ describe('Model model', function () {
             });
             model.save(function (err, data) {
                 err.should.be.an.instanceOf(Error);
-                data.should.eql({});
-                done();
-            });
-        });
-
-        it('calls callback with error status if response is not valid json', function (done) {
-            http.request.yieldsAsync({
-                statusCode: 501,
-                pipe: function (s) {
-                    s.write('success');
-                    s.end();
-                }
-            });
-            model.save(function (err) {
-                err.should.eql({ status: 501 });
+                expect(data).to.be.undefined;
                 done();
             });
         });
@@ -253,6 +246,37 @@ describe('Model model', function () {
             model.auth = sinon.stub().returns('user:pass');
             model.save(cb);
             http.request.args[0][0].auth.should.equal('user:pass');
+        });
+
+        it('emits a "sync" event', function () {
+            var sync = sinon.stub();
+            model.on('sync', sync);
+            model.save(function () {});
+            sync.should.have.been.calledOnce;
+            sync.should.have.been.calledWith(sinon.match({ method: 'POST' }));
+        });
+
+        it('emits a "fail" event on error', function (done) {
+            http.request.yieldsAsync(fail);
+            model.on('fail', function (err, data, settings, statusCode) {
+                err.should.eql({ message: 'error', status: 500 });
+                data.should.eql({ message: 'error' });
+                settings.method.should.equal('POST');
+                statusCode.should.equal(500);
+                done();
+            });
+            model.save(function () {});
+        });
+
+        it('emits a "success" event on success', function (done) {
+            http.request.yieldsAsync(success);
+            model.on('success', function (data, settings, statusCode) {
+                data.should.eql({ message: 'success' });
+                settings.method.should.equal('POST');
+                statusCode.should.equal(200);
+                done();
+            });
+            model.save(function () {});
         });
 
     });
@@ -353,7 +377,7 @@ describe('Model model', function () {
             });
         });
 
-        it('calls callback with raw data if it is not valid json', function (done) {
+        it('throws error if response is not valid json', function (done) {
             http.request.yieldsAsync({
                 statusCode: 200,
                 pipe: function (s) {
@@ -362,22 +386,8 @@ describe('Model model', function () {
                 }
             });
             model.fetch(function (err, data) {
-                expect(err).to.be.null;
-                data.should.eql('success');
-                done();
-            });
-        });
-
-        it('calls callback with error status if response is not valid json', function (done) {
-            http.request.yieldsAsync({
-                statusCode: 501,
-                pipe: function (s) {
-                    s.write('success');
-                    s.end();
-                }
-            });
-            model.fetch(function (err) {
-                err.should.eql({ status: 501 });
+                err.should.be.an.instanceOf(Error);
+                expect(data).to.be.undefined;
                 done();
             });
         });
@@ -404,6 +414,37 @@ describe('Model model', function () {
             model.auth = sinon.stub().returns('user:pass');
             model.fetch(cb);
             http.request.args[0][0].auth.should.equal('user:pass');
+        });
+
+        it('emits a "sync" event', function () {
+            var sync = sinon.stub();
+            model.on('sync', sync);
+            model.fetch(function () {});
+            sync.should.have.been.calledOnce;
+            sync.should.have.been.calledWith(sinon.match({ method: 'GET' }));
+        });
+
+        it('emits a "fail" event on error', function (done) {
+            http.request.yieldsAsync(fail);
+            model.on('fail', function (err, data, settings, statusCode) {
+                err.should.eql({ message: 'error', status: 500 });
+                data.should.eql({ message: 'error' });
+                settings.method.should.equal('GET');
+                statusCode.should.equal(500);
+                done();
+            });
+            model.fetch(function () {});
+        });
+
+        it('emits a "success" event on success', function (done) {
+            http.request.yieldsAsync(success);
+            model.on('success', function (data, settings, statusCode) {
+                data.should.eql({ message: 'success' });
+                settings.method.should.equal('GET');
+                statusCode.should.equal(200);
+                done();
+            });
+            model.fetch(function () {});
         });
 
     });
@@ -503,7 +544,7 @@ describe('Model model', function () {
             });
         });
 
-        it('calls callback with raw data if it is not valid json', function (done) {
+        it('throws error if response is not valid json', function (done) {
             http.request.yieldsAsync({
                 statusCode: 200,
                 pipe: function (s) {
@@ -512,22 +553,8 @@ describe('Model model', function () {
                 }
             });
             model.delete(function (err, data) {
-                expect(err).to.be.null;
-                data.should.eql('success');
-                done();
-            });
-        });
-
-        it('calls callback with error status if response is not valid json', function (done) {
-            http.request.yieldsAsync({
-                statusCode: 501,
-                pipe: function (s) {
-                    s.write('success');
-                    s.end();
-                }
-            });
-            model.delete(function (err) {
-                err.should.eql({ status: 501 });
+                err.should.be.an.instanceOf(Error);
+                expect(data).to.be.undefined;
                 done();
             });
         });
@@ -548,6 +575,37 @@ describe('Model model', function () {
                 err.should.eql(new Error('parse'));
                 done();
             });
+        });
+
+        it('emits a "sync" event', function () {
+            var sync = sinon.stub();
+            model.on('sync', sync);
+            model.delete(function () {});
+            sync.should.have.been.calledOnce;
+            sync.should.have.been.calledWith(sinon.match({ method: 'DELETE' }));
+        });
+
+        it('emits a "fail" event on error', function (done) {
+            http.request.yieldsAsync(fail);
+            model.on('fail', function (err, data, settings, statusCode) {
+                err.should.eql({ message: 'error', status: 500 });
+                data.should.eql({ message: 'error' });
+                settings.method.should.equal('DELETE');
+                statusCode.should.equal(500);
+                done();
+            });
+            model.delete(function () {});
+        });
+
+        it('emits a "success" event on success', function (done) {
+            http.request.yieldsAsync(success);
+            model.on('success', function (data, settings, statusCode) {
+                data.should.eql({ message: 'success' });
+                settings.method.should.equal('DELETE');
+                statusCode.should.equal(200);
+                done();
+            });
+            model.delete(function () {});
         });
 
 
