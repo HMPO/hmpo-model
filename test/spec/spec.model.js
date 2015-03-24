@@ -253,12 +253,15 @@ describe('Model model', function () {
             model.on('sync', sync);
             model.save(function () {});
             sync.should.have.been.calledOnce;
+            sync.should.have.been.calledWith(sinon.match({ method: 'POST' }));
         });
 
         it('emits a "fail" event on error', function (done) {
             http.request.yieldsAsync(fail);
-            model.on('fail', function (err) {
+            model.on('fail', function (err, data, settings) {
                 err.should.eql({ message: 'error', status: 500 });
+                data.should.eql({ message: 'error' });
+                settings.method.should.equal('POST');
                 done();
             });
             model.save(function () {});
@@ -266,8 +269,9 @@ describe('Model model', function () {
 
         it('emits a "success" event on success', function (done) {
             http.request.yieldsAsync(success);
-            model.on('success', function (data) {
+            model.on('success', function (data, settings) {
                 data.should.eql({ message: 'success' });
+                settings.method.should.equal('POST');
                 done();
             });
             model.save(function () {});
@@ -415,12 +419,15 @@ describe('Model model', function () {
             model.on('sync', sync);
             model.fetch(function () {});
             sync.should.have.been.calledOnce;
+            sync.should.have.been.calledWith(sinon.match({ method: 'GET' }));
         });
 
         it('emits a "fail" event on error', function (done) {
             http.request.yieldsAsync(fail);
-            model.on('fail', function (err) {
+            model.on('fail', function (err, data, settings) {
                 err.should.eql({ message: 'error', status: 500 });
+                data.should.eql({ message: 'error' });
+                settings.method.should.equal('GET');
                 done();
             });
             model.fetch(function () {});
@@ -428,8 +435,9 @@ describe('Model model', function () {
 
         it('emits a "success" event on success', function (done) {
             http.request.yieldsAsync(success);
-            model.on('success', function (data) {
+            model.on('success', function (data, settings) {
                 data.should.eql({ message: 'success' });
+                settings.method.should.equal('GET');
                 done();
             });
             model.fetch(function () {});
@@ -570,12 +578,15 @@ describe('Model model', function () {
             model.on('sync', sync);
             model.delete(function () {});
             sync.should.have.been.calledOnce;
+            sync.should.have.been.calledWith(sinon.match({ method: 'DELETE' }));
         });
 
         it('emits a "fail" event on error', function (done) {
             http.request.yieldsAsync(fail);
-            model.on('fail', function (err) {
+            model.on('fail', function (err, data, settings) {
                 err.should.eql({ message: 'error', status: 500 });
+                data.should.eql({ message: 'error' });
+                settings.method.should.equal('DELETE');
                 done();
             });
             model.delete(function () {});
@@ -583,8 +594,9 @@ describe('Model model', function () {
 
         it('emits a "success" event on success', function (done) {
             http.request.yieldsAsync(success);
-            model.on('success', function (data) {
+            model.on('success', function (data, settings) {
                 data.should.eql({ message: 'success' });
+                settings.method.should.equal('DELETE');
                 done();
             });
             model.delete(function () {});

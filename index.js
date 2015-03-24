@@ -69,9 +69,9 @@ _.extend(Model.prototype, {
 
         var _callback = function (err, data) {
             if (err) {
-                this.emit('fail', err, data);
+                this.emit('fail', err, data, settings);
             } else {
-                this.emit('success', data);
+                this.emit('success', data, settings);
             }
             callback(err, data);
         }.bind(this);
@@ -82,7 +82,7 @@ _.extend(Model.prototype, {
         request.on('error', function(e) {
             _callback(e);
         }.bind(this));
-        this.emit('sync');
+        this.emit('sync', settings);
         if (settings.data) {
             request.write(settings.data);
         }
