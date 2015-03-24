@@ -38,7 +38,7 @@ _.extend(Model.prototype, {
 
             reqConf.data = data;
 
-            this.buildRequest(reqConf, callback);
+            this.request(reqConf, callback);
 
         }.bind(this));
     },
@@ -50,7 +50,7 @@ _.extend(Model.prototype, {
         }
         var reqConf = url.parse(this.url(options));
         reqConf.method = options.method || 'GET';
-        this.buildRequest(reqConf, callback);
+        this.request(reqConf, callback);
     },
 
     delete: function (options, callback) {
@@ -60,19 +60,29 @@ _.extend(Model.prototype, {
         }
         var reqConf = url.parse(this.url(options));
         reqConf.method = options.method || 'DELETE';
-        this.buildRequest(reqConf, callback);
+        this.request(reqConf, callback);
     },
 
-    buildRequest: function (settings, callback) {
+    request: function (settings, callback) {
         var protocol = (settings.protocol === 'http:') ? http : https;
         settings.auth = this.auth();
 
+        var _callback = function (err, data) {
+            if (err) {
+                this.emit('fail', err, data);
+            } else {
+                this.emit('success', data);
+            }
+            callback(err, data);
+        }.bind(this);
+
         var request = protocol.request(settings, function (response) {
-            this.handleResponse(response, settings, callback);
+            this.handleResponse(response, settings, _callback);
         }.bind(this));
         request.on('error', function(e) {
-            callback(e);
+            _callback(e);
         }.bind(this));
+        this.emit('sync');
         if (settings.data) {
             request.write(settings.data);
         }
