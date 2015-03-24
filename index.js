@@ -67,11 +67,11 @@ _.extend(Model.prototype, {
         var protocol = (settings.protocol === 'http:') ? http : https;
         settings.auth = this.auth();
 
-        var _callback = function (err, data) {
+        var _callback = function (err, data, statusCode) {
             if (err) {
-                this.emit('fail', err, data, settings);
+                this.emit('fail', err, data, settings, statusCode);
             } else {
-                this.emit('success', data, settings);
+                this.emit('success', data, settings, statusCode);
             }
             callback(err, data);
         }.bind(this);
@@ -103,12 +103,12 @@ _.extend(Model.prototype, {
             if (response.statusCode < 400) {
                 try {
                     data = this.parse(data);
-                    callback(null, data);
+                    callback(null, data, response.statusCode);
                 } catch (e) {
-                    callback(e);
+                    callback(e, null, response.statusCode);
                 }
             } else {
-                callback(this.parseError(response.statusCode, data), data);
+                callback(this.parseError(response.statusCode, data), data, response.statusCode);
             }
         }.bind(this)));
     },
