@@ -6,7 +6,7 @@ var Model = require('../../');
 
 describe('Model model', function () {
 
-    var model, cb, apiRequest, success, fail;
+    var model, cb, apiRequest, success, empty, fail;
 
     beforeEach(function () {
         model = new Model();
@@ -20,6 +20,12 @@ describe('Model model', function () {
             statusCode: 200,
             pipe: function (s) {
                 s.write('{ "message": "success" }');
+                s.end();
+            }
+        };
+        empty = {
+            statusCode: 200,
+            pipe: function (s) {
                 s.end();
             }
         };
@@ -279,6 +285,15 @@ describe('Model model', function () {
             model.save(function () {});
         });
 
+        it('allows an empty response body', function (done) {
+            http.request.yieldsAsync(empty);
+            model.save(function (err, data) {
+                expect(err).to.be.null;
+                data.should.eql({});
+                done();
+            });
+        });
+
     });
 
     describe('fetch', function () {
@@ -447,6 +462,15 @@ describe('Model model', function () {
             model.fetch(function () {});
         });
 
+        it('allows an empty response body', function (done) {
+            http.request.yieldsAsync(empty);
+            model.fetch(function (err, data) {
+                expect(err).to.be.null;
+                data.should.eql({});
+                done();
+            });
+        });
+
     });
 
     describe('delete', function () {
@@ -606,6 +630,15 @@ describe('Model model', function () {
                 done();
             });
             model.delete(function () {});
+        });
+
+        it('allows an empty response body', function (done) {
+            http.request.yieldsAsync(empty);
+            model.delete(function (err, data) {
+                expect(err).to.be.null;
+                data.should.eql({});
+                done();
+            });
         });
 
 
