@@ -95,7 +95,7 @@ _.extend(Model.prototype, {
         response.pipe(concat(function (d) {
             var data = {};
             try {
-                data = JSON.parse(d.toString());
+                data = JSON.parse(d.toString() || '{}');
             } catch (e) {
                 return callback(new Error('Invalid JSON response'));
             }
