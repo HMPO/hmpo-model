@@ -217,7 +217,7 @@ describe('Model model', function () {
             });
             model.save(function (err, data) {
                 err.should.be.an.instanceOf(Error);
-                expect(data).to.be.undefined;
+                expect(data).to.be.null;
                 done();
             });
         });
@@ -402,7 +402,7 @@ describe('Model model', function () {
             });
             model.fetch(function (err, data) {
                 err.should.be.an.instanceOf(Error);
-                expect(data).to.be.undefined;
+                expect(data).to.be.null;
                 done();
             });
         });
@@ -578,7 +578,7 @@ describe('Model model', function () {
             });
             model.delete(function (err, data) {
                 err.should.be.an.instanceOf(Error);
-                expect(data).to.be.undefined;
+                expect(data).to.be.null;
                 done();
             });
         });
