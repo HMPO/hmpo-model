@@ -18,7 +18,7 @@ model.fetch(function (err, data) {
 });
 ```
 
-### `save
+### `save`
 
 ```javascript
 var model = new Model();
