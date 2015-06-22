@@ -38,6 +38,9 @@ describe('Model model', function () {
         };
         sinon.stub(http, 'request').returns(apiRequest);
         sinon.stub(https, 'request').returns(apiRequest);
+
+        sinon.spy(model, 'parseResponse');
+
     });
 
     afterEach(function () {
@@ -294,6 +297,14 @@ describe('Model model', function () {
             });
         });
 
+        it('passes statusCode, response body and callback to `parseResponse`', function (done) {
+            http.request.yieldsAsync(success);
+            model.save(function () {
+                model.parseResponse.should.have.been.calledWith(200, { message: 'success' }, sinon.match.func);
+                done();
+            });
+        });
+
     });
 
     describe('fetch', function () {
@@ -471,6 +482,14 @@ describe('Model model', function () {
             });
         });
 
+        it('passes statusCode, response body and callback to `parseResponse`', function (done) {
+            http.request.yieldsAsync(success);
+            model.fetch(function () {
+                model.parseResponse.should.have.been.calledWith(200, { message: 'success' }, sinon.match.func);
+                done();
+            });
+        });
+
     });
 
     describe('delete', function () {
@@ -641,6 +660,41 @@ describe('Model model', function () {
             });
         });
 
+        it('passes statusCode, response body and callback to `parseResponse`', function (done) {
+            http.request.yieldsAsync(success);
+            model.delete(function () {
+                model.parseResponse.should.have.been.calledWith(200, { message: 'success' }, sinon.match.func);
+                done();
+            });
+        });
+
+    });
+
+    describe('parseResponse', function () {
+
+        beforeEach(function () {
+            sinon.stub(model, 'parse').returns({ parsed: 'true' });
+            sinon.stub(model, 'parseError').returns({ error: 'true' });
+        });
+
+        it('sends response bodies with "success" status codes to parse', function (done) {
+            model.parseResponse(200, { parsed: 'false' }, function (err, data, statusCode) {
+                expect(err).to.be.null;
+                model.parse.should.have.been.calledWith({ parsed: 'false' });
+                data.should.eql({ parsed: 'true' });
+                statusCode.should.equal(200);
+                done();
+            });
+        });
+
+        it('sends response bodies with "failure" status codes to parseError', function (done) {
+            model.parseResponse(400, { parsed: 'false' }, function (err, data, statusCode) {
+                err.should.eql({ error: 'true' });
+                data.should.eql({ parsed: 'false' });
+                statusCode.should.equal(400);
+                done();
+            });
+        });
 
     });
 
