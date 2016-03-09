@@ -1,6 +1,7 @@
 var http = require('http'),
     https = require('https'),
-    util = require('util');
+    util = require('util'),
+    url = require('url');
 
 var Model = require('../../');
 
@@ -240,6 +241,22 @@ describe('Model model', function () {
             model.url.should.have.been.calledWithExactly({ url: 'foo' });
         });
 
+        it('can handle a parsed URL object', function () {
+            var url = {
+                protocol: 'http:',
+                port: '1234',
+                hostname: 'proxy-example.com',
+                path: '/'
+            };
+            model.url = sinon.stub().returns(url);
+            model.save(cb);
+            http.request.should.have.been.called;
+            http.request.args[0][0].protocol.should.equal('http:');
+            http.request.args[0][0].port.should.equal('1234');
+            http.request.args[0][0].hostname.should.equal('proxy-example.com');
+            http.request.args[0][0].path.should.equal('/');
+        });
+
         it('calls callback with error if parse fails', function (done) {
             model.parse = function () {
                 throw new Error('parse');
@@ -249,6 +266,17 @@ describe('Model model', function () {
                 err.should.eql(new Error('parse'));
                 done();
             });
+        });
+
+        it('allows custom headers', function () {
+            var endPoint = url.parse('http://proxy-example.com:1234');
+            endPoint.headers = {
+                Host: url.parse('http://example.com/').host
+            };
+            model.url = sinon.stub().returns(endPoint);
+            model.save(cb);
+            http.request.args[0][0].headers['Content-Type'].should.equal('application/json');
+            http.request.args[0][0].headers.Host.should.equal('example.com');
         });
 
         it('includes auth setting if defined', function () {
@@ -308,7 +336,6 @@ describe('Model model', function () {
     });
 
     describe('fetch', function () {
-
 
         var cb;
 
@@ -423,6 +450,32 @@ describe('Model model', function () {
             model.fetch({ url: 'foo' }, cb);
             model.url.should.have.been.calledOnce;
             model.url.should.have.been.calledWithExactly({ url: 'foo' });
+        });
+
+        it('can handle a parsed URL object', function () {
+            var url = {
+                protocol: 'http:',
+                port: '1234',
+                hostname: 'proxy-example.com',
+                path: '/'
+            };
+            model.url = sinon.stub().returns(url);
+            model.fetch(cb);
+            http.request.should.have.been.called;
+            http.request.args[0][0].protocol.should.equal('http:');
+            http.request.args[0][0].port.should.equal('1234');
+            http.request.args[0][0].hostname.should.equal('proxy-example.com');
+            http.request.args[0][0].path.should.equal('/');
+        });
+
+        it('allows custom headers', function () {
+            var endPoint = url.parse('http://proxy-example.com:1234');
+            endPoint.headers = {
+                Host: url.parse('http://example.com/').host
+            };
+            model.url = sinon.stub().returns(endPoint);
+            model.fetch(cb);
+            http.request.args[0][0].headers.Host.should.equal('example.com');
         });
 
         it('calls callback with error if parse fails', function (done) {
@@ -607,6 +660,32 @@ describe('Model model', function () {
             model.delete({ url: 'foo' }, cb);
             model.url.should.have.been.calledOnce;
             model.url.should.have.been.calledWithExactly({ url: 'foo' });
+        });
+
+        it('can handle a parsed URL object', function () {
+            var url = {
+                protocol: 'http:',
+                port: '1234',
+                hostname: 'proxy-example.com',
+                path: '/'
+            };
+            model.url = sinon.stub().returns(url);
+            model.delete(cb);
+            http.request.should.have.been.called;
+            http.request.args[0][0].protocol.should.equal('http:');
+            http.request.args[0][0].port.should.equal('1234');
+            http.request.args[0][0].hostname.should.equal('proxy-example.com');
+            http.request.args[0][0].path.should.equal('/');
+        });
+
+        it('allows custom headers', function () {
+            var endPoint = url.parse('http://proxy-example.com:1234');
+            endPoint.headers = {
+                Host: url.parse('http://example.com/').host
+            };
+            model.url = sinon.stub().returns(endPoint);
+            model.delete(cb);
+            http.request.args[0][0].headers.Host.should.equal('example.com');
         });
 
         it('calls callback with error if parse fails', function (done) {
