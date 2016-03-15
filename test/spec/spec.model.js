@@ -81,6 +81,107 @@ describe('Model model', function () {
 
     });
 
+    describe('request', function () {
+        var settings,
+            bodyData;
+
+        beforeEach(function () {
+            bodyData = '{"name":"Test name"}';
+
+            settings = url.parse('http://example.com:3002/foo/bar');
+            settings.method = 'POST';
+        });
+
+        it('sends an http POST request to requested url with data in settings', function () {
+            http.request.yieldsAsync(success);
+            settings.data = bodyData;
+
+            model.request(settings, cb);
+
+            http.request.should.have.been.called;
+            http.request.args[0][0].method.should.equal('POST');
+            http.request.args[0][0].path.should.equal('/foo/bar');
+            http.request.args[0][0].port.should.equal('3002');
+            http.request.args[0][0].hostname.should.equal('example.com');
+
+            apiRequest.write.should.have.been.calledWith('{"name":"Test name"}');
+            apiRequest.end.should.have.been.called;
+            process.nextTick(function () {
+                cb.should.have.been.calledWith(success);
+            });
+        });
+
+        it('sends an http POST request to requested url with data passed as argument', function () {
+            http.request.yieldsAsync(success);
+
+            model.request(settings, bodyData, cb);
+
+            http.request.should.have.been.called;
+            http.request.args[0][0].method.should.equal('POST');
+            http.request.args[0][0].path.should.equal('/foo/bar');
+            http.request.args[0][0].port.should.equal('3002');
+            http.request.args[0][0].hostname.should.equal('example.com');
+
+            apiRequest.write.should.have.been.calledWith('{"name":"Test name"}');
+            apiRequest.end.should.have.been.called;
+
+            process.nextTick(function () {
+                cb.should.have.been.calledWith(success);
+            });
+        });
+
+        it('sends an http POST request to requested url with data passed as argument and no callback given', function () {
+            http.request.yieldsAsync(success);
+
+            model.request(settings, bodyData);
+
+            http.request.should.have.been.called;
+            http.request.args[0][0].method.should.equal('POST');
+            http.request.args[0][0].path.should.equal('/foo/bar');
+            http.request.args[0][0].port.should.equal('3002');
+            http.request.args[0][0].hostname.should.equal('example.com');
+
+            apiRequest.write.should.have.been.calledWith('{"name":"Test name"}');
+            apiRequest.end.should.have.been.called;
+        });
+
+        it('sends an http GET request to requested url and no callback given', function () {
+            http.request.yieldsAsync(success);
+            settings = url.parse('http://example.com:3002/foo/bar');
+            settings.method = 'GET';
+
+            model.request(settings);
+
+            http.request.should.have.been.called;
+            http.request.args[0][0].method.should.equal('GET');
+            http.request.args[0][0].path.should.equal('/foo/bar');
+            http.request.args[0][0].port.should.equal('3002');
+            http.request.args[0][0].hostname.should.equal('example.com');
+
+            apiRequest.write.should.not.have.been.called;
+            apiRequest.end.should.have.been.called;
+        });
+
+        it('can parse failiure when no callback given', function () {
+            http.request.yieldsAsync(fail);
+
+            model.request(settings, bodyData);
+
+            apiRequest.write.should.have.been.calledWith('{"name":"Test name"}');
+            apiRequest.end.should.have.been.called;
+        });
+
+        it('can parse failiure when no data or callback given', function () {
+            http.request.yieldsAsync(fail);
+
+            model.request(settings);
+
+            apiRequest.write.should.not.have.been.called;
+            apiRequest.end.should.have.been.called;
+        });
+
+    });
+
     describe('save', function () {
 
         beforeEach(function () {
@@ -333,6 +434,20 @@ describe('Model model', function () {
             });
         });
 
+        it('ignores callback if one is not given on success', function () {
+            http.request.yieldsAsync(success);
+            expect(function () {
+                model.save();
+            }).to.not.throw;
+        });
+
+        it('ignores callback if one is not given if API response returns an error code', function () {
+            http.request.yieldsAsync(fail);
+            expect(function () {
+                model.save();
+            }).to.not.throw;
+        });
+
     });
 
     describe('fetch', function () {
@@ -543,6 +658,19 @@ describe('Model model', function () {
             });
         });
 
+        it('ignores callback if one is not given on success', function () {
+            http.request.yieldsAsync(success);
+            expect(function () {
+                model.fetch();
+            }).to.not.throw;
+        });
+
+        it('ignores callback if one not given if API response returns an error code', function () {
+            http.request.yieldsAsync(fail);
+            expect(function () {
+                model.fetch();
+            }).to.not.throw;
+        });
     });
 
     describe('delete', function () {
@@ -747,6 +875,19 @@ describe('Model model', function () {
             });
         });
 
+        it('ignores callback if one is not given on success', function () {
+            http.request.yieldsAsync(success);
+            expect(function () {
+                model.delete();
+            }).to.not.throw;
+        });
+
+        it('ignores callback if one is not given if API response returns an error code', function () {
+            http.request.yieldsAsync(fail);
+            expect(function () {
+                model.delete();
+            }).to.not.throw;
+        });
     });
 
     describe('parseResponse', function () {

@@ -4,6 +4,8 @@
     },
     "rules": {
         "quotes": [1, "single"],
+        "brace-style": [2, "1tbs", { "allowSingleLine": true }],
+        "space-after-keywords": 2,
         "strict": 0,
         "no-mixed-requires": 0,
         "no-underscore-dangle": 0,
