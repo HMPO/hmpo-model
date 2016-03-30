@@ -322,6 +322,8 @@ describe('Model model', function () {
             });
             model.save(function (err, data) {
                 err.should.be.an.instanceOf(Error);
+                err.status.should.equal(200);
+                err.body.should.equal('success');
                 expect(data).to.be.null;
                 done();
             });
@@ -545,7 +547,7 @@ describe('Model model', function () {
             });
         });
 
-        it('throws error if response is not valid json', function (done) {
+        it('calls callback with error if response is not valid json', function (done) {
             http.request.yieldsAsync({
                 statusCode: 200,
                 pipe: function (s) {
@@ -555,6 +557,8 @@ describe('Model model', function () {
             });
             model.fetch(function (err, data) {
                 err.should.be.an.instanceOf(Error);
+                err.status.should.equal(200);
+                err.body.should.equal('success');
                 expect(data).to.be.null;
                 done();
             });
@@ -768,7 +772,7 @@ describe('Model model', function () {
             });
         });
 
-        it('throws error if response is not valid json', function (done) {
+        it('calls callback with error if response is not valid json', function (done) {
             http.request.yieldsAsync({
                 statusCode: 200,
                 pipe: function (s) {
@@ -778,6 +782,8 @@ describe('Model model', function () {
             });
             model.delete(function (err, data) {
                 err.should.be.an.instanceOf(Error);
+                err.status.should.equal(200);
+                err.body.should.equal('success');
                 expect(data).to.be.null;
                 done();
             });
