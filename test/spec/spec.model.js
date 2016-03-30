@@ -243,8 +243,9 @@ describe('Model model', function () {
                     s.end();
                 }
             });
-            model.save(function (e) {
+            model.save(function (e, data, responseTime) {
                 e.should.eql({ status: 500, message: 'error' });
+                responseTime.should.be.a('number');
                 done();
             });
         });
@@ -252,17 +253,19 @@ describe('Model model', function () {
         it('calls callback with an error if http.request throws error event', function (done) {
             var err = new Error('Test error');
             apiRequest.on.withArgs('error').yields(err);
-            model.save(function (e) {
+            model.save(function (e, data, responseTime) {
                 e.should.eql(err);
+                responseTime.should.be.a('number');
                 done();
             });
         });
 
         it('calls callback with no error and json data if response has success code', function (done) {
             http.request.yieldsAsync(success);
-            model.save(function (err, data) {
+            model.save(function (err, data, responseTime) {
                 expect(err).to.be.null;
                 data.should.eql({ message: 'success' });
+                responseTime.should.be.a('number');
                 done();
             });
         });
@@ -270,11 +273,12 @@ describe('Model model', function () {
         it('passes returned data through parse method on success', function (done) {
             sinon.stub(model, 'parse').returns({ parsed: 'message' });
             http.request.yieldsAsync(success);
-            model.save(function (err, data) {
+            model.save(function (err, data, responseTime) {
                 expect(err).to.be.null;
                 model.parse.should.have.been.calledOnce;
                 model.parse.should.have.been.calledWithExactly({ message: 'success' });
                 data.should.eql({ parsed: 'message' });
+                responseTime.should.be.a('number');
                 done();
             });
         });
@@ -288,9 +292,10 @@ describe('Model model', function () {
                 }
             });
             sinon.stub(model, 'parse');
-            model.save(function (err, data) {
+            model.save(function (err, data, responseTime) {
                 model.parse.should.not.have.been.called;
                 data.should.eql({ error: true });
+                responseTime.should.be.a('number');
                 done();
             });
         });
@@ -304,10 +309,11 @@ describe('Model model', function () {
                 }
             });
             sinon.stub(model, 'parseError').returns({ error: 'parsed' });
-            model.save(function (err) {
+            model.save(function (err, data, responseTime) {
                 model.parseError.should.have.been.calledOnce;
                 model.parseError.should.have.been.calledWithExactly(500, {error: true});
                 err.should.eql({ error: 'parsed' });
+                responseTime.should.be.a('number');
                 done();
             });
         });
@@ -320,11 +326,12 @@ describe('Model model', function () {
                     s.end();
                 }
             });
-            model.save(function (err, data) {
+            model.save(function (err, data, responseTime) {
                 err.should.be.an.instanceOf(Error);
                 err.status.should.equal(200);
                 err.body.should.equal('success');
                 expect(data).to.be.null;
+                responseTime.should.be.a('number');
                 done();
             });
         });
@@ -365,8 +372,9 @@ describe('Model model', function () {
                 throw new Error('parse');
             };
             http.request.yieldsAsync(success);
-            model.save(function (err) {
+            model.save(function (err, data, responseTime) {
                 err.should.eql(new Error('parse'));
+                responseTime.should.be.a('number');
                 done();
             });
         });
@@ -398,11 +406,12 @@ describe('Model model', function () {
 
         it('emits a "fail" event on error', function (done) {
             http.request.yieldsAsync(fail);
-            model.on('fail', function (err, data, settings, statusCode) {
+            model.on('fail', function (err, data, settings, statusCode, responseTime) {
                 err.should.eql({ message: 'error', status: 500 });
                 data.should.eql({ message: 'error' });
                 settings.method.should.equal('POST');
                 statusCode.should.equal(500);
+                responseTime.should.be.a('number');
                 done();
             });
             model.save(function () {});
@@ -410,10 +419,11 @@ describe('Model model', function () {
 
         it('emits a "success" event on success', function (done) {
             http.request.yieldsAsync(success);
-            model.on('success', function (data, settings, statusCode) {
+            model.on('success', function (data, settings, statusCode, responseTime) {
                 data.should.eql({ message: 'success' });
                 settings.method.should.equal('POST');
                 statusCode.should.equal(200);
+                responseTime.should.be.a('number');
                 done();
             });
             model.save(function () {});
@@ -421,9 +431,10 @@ describe('Model model', function () {
 
         it('allows an empty response body', function (done) {
             http.request.yieldsAsync(empty);
-            model.save(function (err, data) {
+            model.save(function (err, data, responseTime) {
                 expect(err).to.be.null;
                 data.should.eql({});
+                responseTime.should.be.a('number');
                 done();
             });
         });
@@ -495,8 +506,9 @@ describe('Model model', function () {
                     s.end();
                 }
             });
-            model.fetch(function (e) {
+            model.fetch(function (e, data, responseTime) {
                 e.should.eql({ status: 500, message: 'error' });
+                responseTime.should.be.a('number');
                 done();
             });
         });
@@ -504,17 +516,19 @@ describe('Model model', function () {
         it('calls callback with an error if http.request throws error event', function (done) {
             var err = new Error('Test error');
             apiRequest.on.withArgs('error').yields(err);
-            model.fetch(function (e) {
+            model.fetch(function (e, data, responseTime) {
                 e.should.eql(err);
+                responseTime.should.be.a('number');
                 done();
             });
         });
 
         it('calls callback with no error and json data if response has success code', function (done) {
             http.request.yieldsAsync(success);
-            model.fetch(function (err, data) {
+            model.fetch(function (err, data, responseTime) {
                 expect(err).to.be.null;
                 data.should.eql({ message: 'success' });
+                responseTime.should.be.a('number');
                 done();
             });
         });
@@ -522,11 +536,12 @@ describe('Model model', function () {
         it('passes returned data through parse method on success', function (done) {
             sinon.stub(model, 'parse').returns({ parsed: 'message' });
             http.request.yieldsAsync(success);
-            model.fetch(function (err, data) {
+            model.fetch(function (err, data, responseTime) {
                 expect(err).to.be.null;
                 model.parse.should.have.been.calledOnce;
                 model.parse.should.have.been.calledWithExactly({ message: 'success' });
                 data.should.eql({ parsed: 'message' });
+                responseTime.should.be.a('number');
                 done();
             });
         });
@@ -540,9 +555,10 @@ describe('Model model', function () {
                 }
             });
             sinon.stub(model, 'parse');
-            model.fetch(function (err, data) {
+            model.fetch(function (err, data, responseTime) {
                 model.parse.should.not.have.been.called;
                 data.should.eql({ error: true });
+                responseTime.should.be.a('number');
                 done();
             });
         });
@@ -555,11 +571,12 @@ describe('Model model', function () {
                     s.end();
                 }
             });
-            model.fetch(function (err, data) {
+            model.fetch(function (err, data, responseTime) {
                 err.should.be.an.instanceOf(Error);
                 err.status.should.equal(200);
                 err.body.should.equal('success');
                 expect(data).to.be.null;
+                responseTime.should.be.a('number');
                 done();
             });
         });
@@ -602,8 +619,9 @@ describe('Model model', function () {
                 throw new Error('parse');
             };
             http.request.yieldsAsync(success);
-            model.fetch(function (err) {
+            model.fetch(function (err, data, responseTime) {
                 err.should.eql(new Error('parse'));
+                responseTime.should.be.a('number');
                 done();
             });
         });
@@ -624,11 +642,12 @@ describe('Model model', function () {
 
         it('emits a "fail" event on error', function (done) {
             http.request.yieldsAsync(fail);
-            model.on('fail', function (err, data, settings, statusCode) {
+            model.on('fail', function (err, data, settings, statusCode, responseTime) {
                 err.should.eql({ message: 'error', status: 500 });
                 data.should.eql({ message: 'error' });
                 settings.method.should.equal('GET');
                 statusCode.should.equal(500);
+                responseTime.should.be.a('number');
                 done();
             });
             model.fetch(function () {});
@@ -636,10 +655,11 @@ describe('Model model', function () {
 
         it('emits a "success" event on success', function (done) {
             http.request.yieldsAsync(success);
-            model.on('success', function (data, settings, statusCode) {
+            model.on('success', function (data, settings, statusCode, responseTime) {
                 data.should.eql({ message: 'success' });
                 settings.method.should.equal('GET');
                 statusCode.should.equal(200);
+                responseTime.should.be.a('number');
                 done();
             });
             model.fetch(function () {});
@@ -647,9 +667,10 @@ describe('Model model', function () {
 
         it('allows an empty response body', function (done) {
             http.request.yieldsAsync(empty);
-            model.fetch(function (err, data) {
+            model.fetch(function (err, data, responseTime) {
                 expect(err).to.be.null;
                 data.should.eql({});
+                responseTime.should.be.a('number');
                 done();
             });
         });
@@ -720,8 +741,9 @@ describe('Model model', function () {
                     s.end();
                 }
             });
-            model.delete(function (e) {
+            model.delete(function (e, data, responseTime) {
                 e.should.eql({ status: 500, message: 'error' });
+                responseTime.should.be.a('number');
                 done();
             });
         });
@@ -729,17 +751,19 @@ describe('Model model', function () {
         it('calls callback with an error if http.request throws error event', function (done) {
             var err = new Error('Test error');
             apiRequest.on.withArgs('error').yields(err);
-            model.delete(function (e) {
+            model.delete(function (e, data, responseTime) {
                 e.should.eql(err);
+                responseTime.should.be.a('number');
                 done();
             });
         });
 
         it('calls callback with no error and json data if response has success code', function (done) {
             http.request.yieldsAsync(success);
-            model.delete(function (err, data) {
+            model.delete(function (err, data, responseTime) {
                 expect(err).to.be.null;
                 data.should.eql({ message: 'success' });
+                responseTime.should.be.a('number');
                 done();
             });
         });
@@ -747,11 +771,12 @@ describe('Model model', function () {
         it('passes returned data through parse method on success', function (done) {
             sinon.stub(model, 'parse').returns({ parsed: 'message' });
             http.request.yieldsAsync(success);
-            model.delete(function (err, data) {
+            model.delete(function (err, data, responseTime) {
                 expect(err).to.be.null;
                 model.parse.should.have.been.calledOnce;
                 model.parse.should.have.been.calledWithExactly({ message: 'success' });
                 data.should.eql({ parsed: 'message' });
+                responseTime.should.be.a('number');
                 done();
             });
         });
@@ -765,9 +790,10 @@ describe('Model model', function () {
                 }
             });
             sinon.stub(model, 'parse');
-            model.delete(function (err, data) {
+            model.delete(function (err, data, responseTime) {
                 model.parse.should.not.have.been.called;
                 data.should.eql({ error: true });
+                responseTime.should.be.a('number');
                 done();
             });
         });
@@ -780,11 +806,12 @@ describe('Model model', function () {
                     s.end();
                 }
             });
-            model.delete(function (err, data) {
+            model.delete(function (err, data, responseTime) {
                 err.should.be.an.instanceOf(Error);
                 err.status.should.equal(200);
                 err.body.should.equal('success');
                 expect(data).to.be.null;
+                responseTime.should.be.a('number');
                 done();
             });
         });
@@ -827,8 +854,9 @@ describe('Model model', function () {
                 throw new Error('parse');
             };
             http.request.yieldsAsync(success);
-            model.delete(function (err) {
+            model.delete(function (err, data, responseTime) {
                 err.should.eql(new Error('parse'));
+                responseTime.should.be.a('number');
                 done();
             });
         });
@@ -843,11 +871,12 @@ describe('Model model', function () {
 
         it('emits a "fail" event on error', function (done) {
             http.request.yieldsAsync(fail);
-            model.on('fail', function (err, data, settings, statusCode) {
+            model.on('fail', function (err, data, settings, statusCode, responseTime) {
                 err.should.eql({ message: 'error', status: 500 });
                 data.should.eql({ message: 'error' });
                 settings.method.should.equal('DELETE');
                 statusCode.should.equal(500);
+                responseTime.should.be.a('number');
                 done();
             });
             model.delete(function () {});
@@ -855,10 +884,11 @@ describe('Model model', function () {
 
         it('emits a "success" event on success', function (done) {
             http.request.yieldsAsync(success);
-            model.on('success', function (data, settings, statusCode) {
+            model.on('success', function (data, settings, statusCode, responseTime) {
                 data.should.eql({ message: 'success' });
                 settings.method.should.equal('DELETE');
                 statusCode.should.equal(200);
+                responseTime.should.be.a('number');
                 done();
             });
             model.delete(function () {});
@@ -866,9 +896,10 @@ describe('Model model', function () {
 
         it('allows an empty response body', function (done) {
             http.request.yieldsAsync(empty);
-            model.delete(function (err, data) {
+            model.delete(function (err, data, responseTime) {
                 expect(err).to.be.null;
                 data.should.eql({});
+                responseTime.should.be.a('number');
                 done();
             });
         });
