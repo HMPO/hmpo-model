@@ -13,7 +13,7 @@ There are three methods for API interaction corresponding to GET, POST, and DELE
 
 ```javascript
 var model = new Model();
-model.fetch(function (err, data) {
+model.fetch(function (err, data, responseTime) {
     console.log(data);
 });
 ```
@@ -25,7 +25,7 @@ var model = new Model();
 model.set({
     property: 'properties are sent as JSON request body by default'
 });
-model.save(function (err, data) {
+model.save(function (err, data, responseTime) {
     console.log(data);
 });
 ```
@@ -37,7 +37,7 @@ var model = new Model();
 model.set({
     property: 'this will be sent as a PUT request'
 });
-model.save({ method: 'PUT' }, function (err, data) {
+model.save({ method: 'PUT' }, function (err, data, responseTime) {
     console.log(data);
 });
 ```
@@ -62,7 +62,7 @@ model.fetch({
     hostname: 'example.com',
     port: 3000,
     path: '/foo/bar'
-}, function (err, data) {
+}, function (err, data, responseTime) {
     console.log(data);
 });
 ```
@@ -71,8 +71,18 @@ model.fetch({
 
 API requests will emit events as part of their lifecycle.
 
-* `sync` is emitted when an API request is sent
-* `success` is emitted when an API request successfully completes
-* `fail` is emitted when an API request fails
+`sync` is emitted when an API request is sent
+```javascript
+model.on('sync', function (settings) { });
+```
 
-All events are emitted with the response data, the request settings and the response status as arguments. The fail event has an additional error argument.
+`success` is emitted when an API request successfully completes
+```javascript
+model.on('success', function (data, settings, statusCode, responseTime) { });
+```
+
+`fail` is emitted when an API request fails
+```javascript
+model.on('fail', function (err, data, settings, statusCode, responseTime) { });
+```
+
