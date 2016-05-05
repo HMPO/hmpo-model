@@ -15,7 +15,8 @@ describe('Model model', function () {
         apiRequest = {
             on: sinon.stub(),
             write: sinon.stub(),
-            end: sinon.stub()
+            end: sinon.stub(),
+            abort: sinon.stub()
         };
         success = {
             statusCode: 200,
@@ -179,6 +180,63 @@ describe('Model model', function () {
             apiRequest.write.should.not.have.been.called;
             apiRequest.end.should.have.been.called;
         });
+
+        it('aborts the request if a timeout passes', function (done) {
+            var clock = sinon.useFakeTimers('setTimeout', 'clearTimeout');
+            settings = url.parse('http://example.com:3002/foo/bar');
+            settings.method = 'GET';
+            model.options.timeout = 100;
+            var err = new Error('Original Error');
+            err.code = 'ECONNRESET';
+            apiRequest.on.yieldsAsync(err);
+
+            model.request(settings, cb);
+
+            http.request.should.have.been.called;
+            apiRequest.abort.should.not.have.been.called;
+
+            clock.tick(200);
+
+            apiRequest.abort.should.have.been.calledOnce;
+
+            setImmediate(function () {
+                cb.should.have.been.calledOnce;
+
+                var cbArgs = cb.args[0];
+                var err = cbArgs[0];
+                err.should.be.instanceOf(Error);
+                err.code.should.equal('ETIMEDOUT');
+                err.message.should.equal('Connection timed out');
+                err.status.should.equal(504);
+
+                delete model.options.timeout;
+                clock.restore();
+                done();
+            });
+
+        });
+
+        it('does not abort the request if a response has been received before a timeout expires', function (done) {
+            http.request.yieldsAsync(success);
+            settings = url.parse('http://example.com:3002/foo/bar');
+            settings.method = 'GET';
+            model.options.timeout = 100;
+
+            model.request(settings, cb);
+
+            http.request.should.have.been.calledOnce;
+
+            setTimeout(function () {
+
+                apiRequest.abort.should.not.have.been.called;
+                cb.should.have.been.calledOnce;
+
+                delete model.options.timeout;
+                done();
+            }, 200);
+
+        });
+
 
     });
 
