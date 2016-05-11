@@ -287,10 +287,11 @@ describe('Model model', function () {
         });
 
         it('adds content type and length headers to request', function () {
+            model.set('name', 'Test name - ハセマペヨ');
             model.save(cb);
             http.request.should.have.been.called;
             http.request.args[0][0].headers['Content-Type'].should.equal('application/json');
-            http.request.args[0][0].headers['Content-Length'].should.equal('{"name":"Test name"}'.length);
+            http.request.args[0][0].headers['Content-Length'].should.equal(38);
         });
 
         it('calls callback with an error if API response returns an error code', function (done) {
