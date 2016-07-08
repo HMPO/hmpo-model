@@ -22,7 +22,7 @@
   },
   "homepage": "https://github.com/UKHomeOffice/passports-model",
   "dependencies": {
-    "concat-stream": "^1.4.7",
+    "request": "^2.72.0",
     "underscore": "^1.7.0"
   },
   "devDependencies": {
