@@ -441,14 +441,14 @@ describe('Model model', function () {
             Model._request.yieldsAsync(null, success);
             expect(function () {
                 model.save();
-            }).to.not.throw;
+            }).to.not.throw();
         });
 
         it('ignores callback if one is not given if API response returns an error code', function () {
             Model._request.yieldsAsync(null, fail);
             expect(function () {
                 model.save();
-            }).to.not.throw;
+            }).to.not.throw();
         });
 
     });
@@ -662,14 +662,14 @@ describe('Model model', function () {
             Model._request.yieldsAsync(null, success);
             expect(function () {
                 model.fetch();
-            }).to.not.throw;
+            }).to.not.throw();
         });
 
         it('ignores callback if one not given if API response returns an error code', function () {
             Model._request.yieldsAsync(null, fail);
             expect(function () {
                 model.fetch();
-            }).to.not.throw;
+            }).to.not.throw();
         });
     });
 
@@ -859,14 +859,14 @@ describe('Model model', function () {
             Model._request.yieldsAsync(null, success);
             expect(function () {
                 model.delete();
-            }).to.not.throw;
+            }).to.not.throw();
         });
 
         it('ignores callback if one is not given if API response returns an error code', function () {
             Model._request.yieldsAsync(null, fail);
             expect(function () {
                 model.delete();
-            }).to.not.throw;
+            }).to.not.throw();
         });
     });
 
