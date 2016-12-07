@@ -1,5 +1,5 @@
 {
-  "name": "hmpo-model",
+  "name": "hof-model",
   "version": "0.7.0",
   "description": "Simple model for interacting with http/rest apis.",
   "main": "index.js",
@@ -13,14 +13,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/UKHomeOffice/passports-model.git"
+    "url": "https://github.com/UKHomeOfficeForms/hof-model.git"
   },
   "author": "",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/UKHomeOffice/passports-model/issues"
+    "url": "https://github.com/UKHomeOfficeForms/hof-model/issues"
   },
-  "homepage": "https://github.com/UKHomeOffice/passports-model",
+  "homepage": "https://github.com/UKHomeOfficeForms/hof-model",
   "dependencies": {
     "request": "^2.72.0",
     "underscore": "^1.7.0"
