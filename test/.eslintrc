@@ -1,10 +1,13 @@
-{
-    "env": {
-        "node": true,
-        "mocha": true
-    },
-    "globals": {
-        "sinon": true,
-        "expect": true
-    }
-}
+extends:
+  - '../.eslintrc'
+  - 'homeoffice/config/testing'
+
+rules:
+  no-underscore-dangle: off
+  handle-callback-err: off
+  object-curly-spacing:
+    - error
+    - always
+
+env:
+  es6: true
