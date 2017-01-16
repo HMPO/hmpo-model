@@ -1,4 +1,4 @@
-# hmpo-model
+# hof-model
 Simple model for interacting with http/rest apis.
 
 ## Usage
@@ -85,4 +85,3 @@ model.on('success', function (data, settings, statusCode, responseTime) { });
 ```javascript
 model.on('fail', function (err, data, settings, statusCode, responseTime) { });
 ```
-
