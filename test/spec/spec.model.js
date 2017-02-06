@@ -5,7 +5,6 @@ const Model = require('../../');
 
 describe('Model', () => {
   let model;
-  let cb;
   let apiRequest;
   let error;
   let success;
@@ -13,10 +12,20 @@ describe('Model', () => {
   let fail;
   let invalid;
 
+  const sandbox = (assertions, done) => {
+    return function testAssertions() {
+      try {
+        assertions.apply(this, arguments);
+        done();
+      } catch (err) {
+        done(err);
+      }
+    };
+  };
+
   beforeEach(() => {
     apiRequest = {};
     model = new Model();
-    cb = sinon.stub();
     error = new Error('An Error');
     error.status = 500;
     success = {
@@ -93,118 +102,100 @@ describe('Model', () => {
       model._request.yieldsAsync(success);
       settings.data = bodyData;
 
-      model.request(settings, cb);
+      model.request(settings, sandbox(() => {
+        model._request.should.have.been.calledOnce;
 
-      model._request.should.have.been.calledOnce;
-      var options = model._request.args[0][0];
-      options.method.should.equal('POST');
-      options.uri.should.equal('http://example.com:3002/foo/bar');
-      options.body.should.equal('{"name":"Test name"}');
-      process.nextTick(() => {
-        cb.should.have.been.calledOnce;
-        cb.should.have.been.calledWith(success);
-        done();
-      });
+        var options = model._request.args[0][0];
+        options.method.should.equal('POST');
+        options.uri.should.equal('http://example.com:3002/foo/bar');
+        options.body.should.equal('{"name":"Test name"}');
+      }, done));
+
     });
 
     it('sends an http POST request to requested url with data passed as argument', done => {
       model._request.yieldsAsync(success);
 
-      model.request(settings, bodyData, cb);
+      model.request(settings, bodyData, sandbox(() => {
+        model._request.should.have.been.calledOnce;
 
-      model._request.should.have.been.calledOnce;
-      var options = model._request.args[0][0];
-      options.method.should.equal('POST');
-      options.uri.should.equal('http://example.com:3002/foo/bar');
-      options.body.should.equal('{"name":"Test name"}');
-      process.nextTick(() => {
-        cb.should.have.been.calledOnce;
-        cb.should.have.been.calledWith(success);
-        done();
-      });
+        var options = model._request.args[0][0];
+        options.method.should.equal('POST');
+        options.uri.should.equal('http://example.com:3002/foo/bar');
+        options.body.should.equal('{"name":"Test name"}');
+      }, done));
     });
 
-    it('sends an http POST request to requested url with data passed as argument and no callback given', () => {
+    it('sends an http POST request to requested url with data passed as argument and no callback given', done => {
       model._request.yieldsAsync(success);
 
-      model.request(settings, bodyData);
-
-      model._request.should.have.been.calledOnce;
-      const options = model._request.args[0][0];
-      options.method.should.equal('POST');
-      options.uri.should.equal('http://example.com:3002/foo/bar');
-      options.body.should.equal('{"name":"Test name"}');
+      model.request(settings, bodyData, sandbox(() => {
+        model._request.should.have.been.calledOnce;
+        const options = model._request.args[0][0];
+        options.method.should.equal('POST');
+        options.uri.should.equal('http://example.com:3002/foo/bar');
+        options.body.should.equal('{"name":"Test name"}');
+      }, done));
     });
 
-    it('sends an http GET request to requested url and no callback given', () => {
+    it('sends an http GET request to requested url and no callback given', done => {
       model._request.yieldsAsync(success);
       settings = url.parse('http://example.com:3002/foo/bar');
       settings.method = 'GET';
 
-      model.request(settings);
-
-      model._request.should.have.been.calledOnce;
-      var options = model._request.args[0][0];
-      options.method.should.equal('GET');
-      options.uri.should.equal('http://example.com:3002/foo/bar');
-      expect(options.body).to.not.be.ok;
+      model.request(settings, sandbox(() => {
+        model._request.should.have.been.calledOnce;
+        var options = model._request.args[0][0];
+        options.method.should.equal('GET');
+        options.uri.should.equal('http://example.com:3002/foo/bar');
+        expect(options.body).to.not.be.ok;
+      }, done));
     });
 
     it('can parse failiure when no callback given', done => {
       model._request.yieldsAsync(fail);
 
-      model.request(settings, bodyData);
-
-      model._request.should.have.been.calledOnce;
-      var options = model._request.args[0][0];
-      options.method.should.equal('POST');
-      options.uri.should.equal('http://example.com:3002/foo/bar');
-      options.body.should.equal('{"name":"Test name"}');
-
-      process.nextTick(() => {
-        cb.should.not.have.been.called;
-        done();
-      });
+      model.request(settings, bodyData, sandbox(() => {
+        model._request.should.have.been.calledOnce;
+        var options = model._request.args[0][0];
+        options.method.should.equal('POST');
+        options.uri.should.equal('http://example.com:3002/foo/bar');
+        options.body.should.equal('{"name":"Test name"}');
+      }, done));
     });
 
     it('can parse failiure when no data or callback given', done => {
       model._request.yieldsAsync(fail);
 
-      model.request(settings);
-
-      model._request.should.have.been.calledOnce;
-      var options = model._request.args[0][0];
-      options.method.should.equal('POST');
-      options.uri.should.equal('http://example.com:3002/foo/bar');
-      expect(options.body).to.not.be.ok;
-
-      model.on('fail', cb);
-
-      process.nextTick(() => {
-        cb.should.have.been.calledOnce;
-        cb.should.have.been.calledWith(fail);
-        done();
-      });
+      model.request(settings, sandbox(() => {
+        model._request.should.have.been.calledOnce;
+        var options = model._request.args[0][0];
+        options.method.should.equal('POST');
+        options.uri.should.equal('http://example.com:3002/foo/bar');
+        expect(options.body).to.not.be.ok;
+      }, done));
     });
 
-    it('sets the timeout from model options', () => {
+    it('sets the timeout from model options', done => {
       model.options.timeout = 100;
+      model._request.yieldsAsync(success);
 
-      model.request(settings, cb);
-
-      model._request.should.have.been.calledOnce;
-      var options = model._request.args[0][0];
-      options.timeout.should.equal(100);
+      model.request(settings, sandbox(() => {
+        model._request.should.have.been.calledOnce;
+        var options = model._request.args[0][0];
+        options.timeout.should.equal(100);
+      }, done));
     });
 
-    it('sets the timeout from request options', () => {
+    it('sets the timeout from request options', done => {
       settings.timeout = 100;
+      model._request.yieldsAsync(success);
 
-      model.request(settings, cb);
-
-      model._request.should.have.been.calledOnce;
-      var options = model._request.args[0][0];
-      options.timeout.should.equal(100);
+      model.request(settings, sandbox(() => {
+        model._request.should.have.been.calledOnce;
+        var options = model._request.args[0][0];
+        options.timeout.should.equal(100);
+      }, done));
     });
 
   });
@@ -216,44 +207,53 @@ describe('Model', () => {
       model.url = () => 'http://example.com:3002/foo/bar';
     });
 
-    it('sends an http POST request to configured url containing model attributes as body', () => {
-      model.save(cb);
+    it('sends an http POST request to configured url containing model attributes as body', done => {
+      model._request.yieldsAsync(success);
 
-      model._request.should.have.been.calledOnce;
-      var options = model._request.args[0][0];
-      options.method.should.equal('POST');
-      options.uri.should.equal('http://example.com:3002/foo/bar');
-      options.body.should.equal('{"name":"Test name"}');
+      model.save(sandbox(() => {
+        model._request.should.have.been.calledOnce;
+        var options = model._request.args[0][0];
+        options.method.should.equal('POST');
+        options.uri.should.equal('http://example.com:3002/foo/bar');
+        options.body.should.equal('{"name":"Test name"}');
+      }, done));
     });
 
-    it('sends an https POST request if configured url is `https`', () => {
+    it('sends an https POST request if configured url is `https`', done => {
       model.url = () => 'https://secure-example.com/foo/bar';
-      model.save(cb);
+      model._request.yieldsAsync(success);
 
-      model._request.should.have.been.calledOnce;
-      var options = model._request.args[0][0];
-      options.method.should.equal('POST');
-      options.uri.should.equal('https://secure-example.com/foo/bar');
-      options.body.should.equal('{"name":"Test name"}');
+      model.save(sandbox(() => {
+        model._request.should.have.been.calledOnce;
+        var options = model._request.args[0][0];
+        options.method.should.equal('POST');
+        options.uri.should.equal('https://secure-example.com/foo/bar');
+        options.body.should.equal('{"name":"Test name"}');
+     }, done));
     });
 
-    it('sends an http PUT request if method option is "PUT"', () => {
-      model.save({ method: 'PUT' }, cb);
+    it('sends an http PUT request if method option is "PUT"', done => {
+      model._request.yieldsAsync(success);
 
-      model._request.should.have.been.calledOnce;
-      var options = model._request.args[0][0];
-      options.method.should.equal('PUT');
-      options.uri.should.equal('http://example.com:3002/foo/bar');
-      options.body.should.equal('{"name":"Test name"}');
+      model.save({ method: 'PUT' }, sandbox(() => {
+        model._request.should.have.been.calledOnce;
+        var options = model._request.args[0][0];
+        options.method.should.equal('PUT');
+        options.uri.should.equal('http://example.com:3002/foo/bar');
+        options.body.should.equal('{"name":"Test name"}');
+      }, done));
     });
 
-    it('adds content type and length headers to request', () => {
+    it('adds content type and length headers to request', done => {
       model.set('name', 'Test name - ハセマペヨ');
-      model.save(cb);
-      model._request.should.have.been.calledOnce;
-      var options = model._request.args[0][0];
-      options.headers['Content-Type'].should.equal('application/json');
-      options.headers['Content-Length'].should.equal(38);
+      model._request.yieldsAsync(success);
+
+      model.save(sandbox(() => {
+        model._request.should.have.been.calledOnce;
+        var options = model._request.args[0][0];
+        options.headers['Content-Type'].should.equal('application/json');
+        options.headers['Content-Length'].should.equal(38);
+      }, done));
     });
 
     it('calls callback with an error if API response returns an error code', done => {
@@ -338,14 +338,16 @@ describe('Model', () => {
       model.save({ url: 'foo' }, () => done());
     });
 
-    it('passes options to url method if provided', () => {
+    it('passes options to url method if provided', done => {
       model.url = sinon.stub().returns('http://example.com/');
-      model.save({ url: 'foo' }, cb);
-      model.url.should.have.been.calledOnce;
-      model.url.should.have.been.calledWithExactly({ url: 'foo' });
+      model._request.yieldsAsync(success);
+      model.save({ url: 'foo' }, sandbox(() => {
+        model.url.should.have.been.calledOnce;
+        model.url.should.have.been.calledWithExactly({ url: 'foo' });
+      }, done));
     });
 
-    it('can handle a parsed URL object', () => {
+    it('can handle a parsed URL object', done => {
       var urlStub = {
         protocol: 'http:',
         port: '1234',
@@ -353,9 +355,11 @@ describe('Model', () => {
         pathname: '/'
       };
       model.url = sinon.stub().returns(urlStub);
-      model.save(cb);
-      model._request.should.have.been.called;
-      model._request.args[0][0].uri.should.equal('http://proxy-example.com:1234/');
+      model._request.yieldsAsync(success);
+      model.save(sandbox(() => {
+        model._request.should.have.been.called;
+        model._request.args[0][0].uri.should.equal('http://proxy-example.com:1234/');
+      }, done));
     });
 
     it('calls callback with error if parse fails', done => {
@@ -370,25 +374,31 @@ describe('Model', () => {
       });
     });
 
-    it('allows custom headers', () => {
+    it('allows custom headers', done => {
       var endPoint = url.parse('http://proxy-example.com:1234');
       endPoint.headers = {
         Host: url.parse('http://example.com/').host
       };
       model.url = sinon.stub().returns(endPoint);
-      model.save(cb);
-      model._request.args[0][0].headers['Content-Type'].should.equal('application/json');
-      model._request.args[0][0].headers.Host.should.equal('example.com');
+      model._request.yieldsAsync(success);
+
+      model.save(sandbox(() => {
+        model._request.args[0][0].headers['Content-Type'].should.equal('application/json');
+        model._request.args[0][0].headers.Host.should.equal('example.com');
+      }, done));
     });
 
-    it('includes auth setting if defined', () => {
+    it('includes auth setting if defined', done => {
       model.auth = sinon.stub().returns('user:pass');
-      model.save(cb);
-      model._request.args[0][0].auth.should.deep.equal({
-        user: 'user',
-        pass: 'pass',
-        sendImmediately: true
-      });
+      model._request.yieldsAsync(success);
+
+      model.save(sandbox(() => {
+        model._request.args[0][0].auth.should.deep.equal({
+          user: 'user',
+          pass: 'pass',
+          sendImmediately: true
+        });
+      }, done));
     });
 
     it('emits a "sync" event', () => {
@@ -469,17 +479,12 @@ describe('Model', () => {
     it('sends an http GET request to API server', done => {
       model._request.yieldsAsync(null, success);
 
-      model.fetch(callback);
-
-      model._request.should.have.been.calledOnce;
-      var options = model._request.args[0][0];
-      options.method.should.equal('GET');
-      options.uri.should.equal('http://example.com:3002/foo/bar');
-      process.nextTick(() => {
-        callback.should.have.been.calledOnce;
-        callback.should.have.been.calledWithExactly(null, { message: 'success' }, sinon.match.number);
-        done();
-      });
+      model.fetch(sandbox(() => {
+        model._request.should.have.been.calledOnce;
+        var options = model._request.args[0][0];
+        options.method.should.equal('GET');
+        options.uri.should.equal('http://example.com:3002/foo/bar');
+      }, done));
     });
 
     it('calls callback with an error if API response returns an error code', done => {
@@ -553,7 +558,7 @@ describe('Model', () => {
       model.url.should.have.been.calledWithExactly({ url: 'foo' });
     });
 
-    it('can handle a parsed URL object', () => {
+    it('can handle a parsed URL object', done => {
       var urlStub = {
         protocol: 'http:',
         port: '1234',
@@ -561,19 +566,23 @@ describe('Model', () => {
         pathname: '/'
       };
       model.url = sinon.stub().returns(urlStub);
-      model.fetch(callback);
-      model._request.should.have.been.called;
-      model._request.args[0][0].uri.should.equal('http://proxy-example.com:1234/');
+      model._request.yieldsAsync(success);
+      model.fetch(sandbox(() => {
+        model._request.should.have.been.called;
+        model._request.args[0][0].uri.should.equal('http://proxy-example.com:1234/');
+      }, done));
     });
 
-    it('allows custom headers', () => {
+    it('allows custom headers', done => {
       var endPoint = url.parse('http://proxy-example.com:1234');
       endPoint.headers = {
         Host: url.parse('http://example.com/').host
       };
       model.url = sinon.stub().returns(endPoint);
-      model.fetch(callback);
-      model._request.args[0][0].headers.Host.should.equal('example.com');
+      model._request.yieldsAsync(success);
+      model.fetch(sandbox(() => {
+        model._request.args[0][0].headers.Host.should.equal('example.com');
+      }, done));
     });
 
     it('calls callback with error if parse fails', done => {
@@ -588,14 +597,16 @@ describe('Model', () => {
       });
     });
 
-    it('includes auth setting if defined', () => {
+    it('includes auth setting if defined', done => {
       model.auth = sinon.stub().returns('user:pass');
-      model.fetch(callback);
-      model._request.args[0][0].auth.should.deep.equal({
-        user: 'user',
-        pass: 'pass',
-        sendImmediately: true
-      });
+      model._request.yieldsAsync(success);
+      model.fetch(sandbox(() => {
+        model._request.args[0][0].auth.should.deep.equal({
+          user: 'user',
+          pass: 'pass',
+          sendImmediately: true
+        });
+      }, done));
     });
 
     it('emits a "sync" event', () => {
@@ -689,17 +700,12 @@ describe('Model', () => {
     it('sends an http DELETE request to API server', done => {
       model._request.yieldsAsync(null, success);
 
-      model.delete(callback);
-
-      model._request.should.have.been.calledOnce;
-      var options = model._request.args[0][0];
-      options.method.should.equal('DELETE');
-      options.uri.should.equal('http://example.com:3002/foo/bar');
-      process.nextTick(() => {
-        callback.should.have.been.calledOnce;
-        callback.should.have.been.calledWithExactly(null, { message: 'success' }, sinon.match.number);
-        done();
-      });
+      model.delete(sandbox(() => {
+        model._request.should.have.been.calledOnce;
+        var options = model._request.args[0][0];
+        options.method.should.equal('DELETE');
+        options.uri.should.equal('http://example.com:3002/foo/bar');
+      }, done));
     });
 
     it('calls callback with an error if API response returns an error code', done => {
@@ -773,7 +779,7 @@ describe('Model', () => {
       model.url.should.have.been.calledWithExactly({ url: 'foo' });
     });
 
-    it('can handle a parsed URL object', () => {
+    it('can handle a parsed URL object', done => {
       var urlStub = {
         protocol: 'http:',
         port: '1234',
@@ -781,19 +787,23 @@ describe('Model', () => {
         pathname: '/'
       };
       model.url = sinon.stub().returns(urlStub);
-      model.delete(callback);
-      model._request.should.have.been.called;
-      model._request.args[0][0].uri.should.equal('http://proxy-example.com:1234/');
+      model._request.yieldsAsync(success);
+      model.delete(sandbox(() => {
+        model._request.should.have.been.called;
+        model._request.args[0][0].uri.should.equal('http://proxy-example.com:1234/');
+      }, done));
     });
 
-    it('allows custom headers', () => {
+    it('allows custom headers', done => {
       var endPoint = url.parse('http://proxy-example.com:1234');
       endPoint.headers = {
         Host: url.parse('http://example.com/').host
       };
       model.url = sinon.stub().returns(endPoint);
-      model.delete(callback);
-      model._request.args[0][0].headers.Host.should.equal('example.com');
+      model._request.yieldsAsync(success);
+      model.delete(sandbox(() => {
+        model._request.args[0][0].headers.Host.should.equal('example.com');
+      }, done));
     });
 
     it('calls callback with error if parse fails', done => {
