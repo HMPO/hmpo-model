@@ -9,7 +9,7 @@
     "unit": "mocha test/spec/ --recursive --require test/helper",
     "cover": "istanbul cover _mocha -- test/spec/ --recursive --require test/helper",
     "check-coverage": "istanbul check-coverage --statement 100 --branch 100 --function 100 --line 100",
-    "snyk": "snyk test"
+    "snyk": "snyk auth $SNYK_TOKEN && snyk test"
   },
   "repository": {
     "type": "git",
@@ -27,6 +27,7 @@
   },
   "devDependencies": {
     "chai": "^3.5.0",
+    "eslint": "^3.15.0",
     "eslint-config-homeoffice": "^2.0.0",
     "istanbul": "^0.4.3",
     "mocha": "^2.1.0",
