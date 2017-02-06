@@ -5,6 +5,10 @@ node_js:
 cache:
   directories:
   - node_modules
+
+before_install:
+  - if [[ `npm -v` != 3* ]]; then npm i -g npm@3; fi
+
 env:
   matrix:
     secure: QBG2vH/bRTW3o8AGu/4Sw3/0LUgq7iCu48Uq4YbiKjjtzB/5DBA8VN9ddxS8H4ZBkZvN2Vc1uQF7KTEyi/jHcwzFtfAxr0sAbePr3g5eoiBGBrzMW+jzRZS+bsox+dvWJ+eXvo2UJJBQZzZkdJJSpmCEnSeHArmuzb3hmIM0lawTZVVJuy0MQzg0al2A0GIkulCI2PNSyBtK41Cm73d0I+WczCbLC05sINNE0rhc54ebL1vB9KFvQPP2WZ/8UUbQCuFr3l9Mj+5AEfojjl9IzOu1St1ox3aqQW6qrFZgonHXhW8fToN6rQCrpmtNFz+afClY+nXyQ4oUHmI2X8zK0zn2QNoYZ592hCwthWwGlCiNsPHXqDRsRQYtVeUKbMoHUoIsCk51A404QnzkTMm+etNrkGgkFJjRICGXXom+DQ+oqQ0fMqzwI3e+hJ7UQK0ZAB4votUoOrTxtzLXA+RJ2kszkfljlTqJwrfYyVCssFjABmwNMZVYBNDyXO9FAIlZAnWTkfAvBkEgKe+n45Ft8Rb82Pu2t2w5Xs0m0fhwikRPlvKv5/uAHXgqX1GGYQUC497TnaiKnixagu6gHM7kV3N6HPrAtqaV909fQeyEDQIn0PZDXT0lysNvm0lF9swJ6hAhH0ejy/IedCWZ5z4xovBSZ0v94AwwdCN05GhUg1M=
