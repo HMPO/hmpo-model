@@ -1,6 +1,6 @@
 {
   "name": "hof-model",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "description": "Simple model for interacting with http/rest apis.",
   "main": "index.js",
   "scripts": {
