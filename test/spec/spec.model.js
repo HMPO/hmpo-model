@@ -198,6 +198,10 @@ describe('Model', () => {
       }, done));
     });
 
+    it('returns a promise if no callback is provided', () => {
+      model.request(settings).should.be.a('promise');
+    });
+
   });
 
   describe('save', () => {
@@ -258,78 +262,64 @@ describe('Model', () => {
 
     it('calls callback with an error if API response returns an error code', done => {
       model._request.yieldsAsync(null, fail);
-      model.save((e, data, responseTime) => {
+      model.save(sandbox(e => {
         e.should.eql({ status: 500, message: 'error' });
-        responseTime.should.be.a('number');
-        done();
-      });
+      }, done));
     });
 
     it('calls callback with an error if request throws error event', done => {
       model._request.yieldsAsync(error);
-      model.save((e, data, responseTime) => {
+      model.save(sandbox(e => {
         e.should.eql(error);
-        responseTime.should.be.a('number');
-        done();
-      });
+      }, done));
     });
 
     it('calls callback with no error and json data if response has success code', done => {
       model._request.yieldsAsync(null, success);
-      model.save((err, data, responseTime) => {
+      model.save(sandbox((err, data) => {
         expect(err).to.be.null;
         data.should.eql({ message: 'success' });
-        responseTime.should.be.a('number');
-        done();
-      });
+      }, done));
     });
 
     it('passes returned data through parse method on success', done => {
       sinon.stub(model, 'parse').returns({ parsed: 'message' });
       model._request.yieldsAsync(null, success);
-      model.save((err, data, responseTime) => {
+      model.save(sandbox((err, data) => {
         expect(err).to.be.null;
         model.parse.should.have.been.calledOnce;
         model.parse.should.have.been.calledWithExactly({ message: 'success' });
         data.should.eql({ parsed: 'message' });
-        responseTime.should.be.a('number');
-        done();
-      });
+      }, done));
     });
 
     it('does not parse response on error', done => {
       model._request.yieldsAsync(null, fail);
       sinon.stub(model, 'parse');
-      model.save((err, data, responseTime) => {
+      model.save(sandbox((err) => {
         model.parse.should.not.have.been.called;
-        data.should.eql({ message: 'error' });
-        responseTime.should.be.a('number');
-        done();
-      });
+        err.should.eql({ message: 'error', status: 500 });
+      }, done));
     });
 
     it('calls parseError on error to extract error status from response', done => {
       model._request.yieldsAsync(null, fail);
       sinon.stub(model, 'parseError').returns({ error: 'parsed' });
-      model.save((err, data, responseTime) => {
+      model.save(sandbox(err => {
         model.parseError.should.have.been.calledOnce;
         model.parseError.should.have.been.calledWithExactly(500, { message: 'error' });
         err.should.eql({ error: 'parsed' });
-        responseTime.should.be.a('number');
-        done();
-      });
+      }, done));
     });
 
     it('calls callback with error if response is not valid json', done => {
       model._request.yieldsAsync(null, invalid);
-      model.save((err, data, responseTime) => {
+      model.save(sandbox((err, data) => {
         err.should.be.an.instanceOf(Error);
         err.status.should.equal(200);
         err.body.should.equal('invalid');
-        expect(data).to.be.null;
-        responseTime.should.be.a('number');
-        done();
-      });
+        expect(data).not.to.be.ok;
+      }, done));
     });
 
     it('can handle optional options parameter', done => {
@@ -367,11 +357,9 @@ describe('Model', () => {
         throw new Error('parse');
       };
       model._request.yieldsAsync(null, success);
-      model.save((err, data, responseTime) => {
+      model.save(sandbox(err => {
         err.should.eql(new Error('parse'));
-        responseTime.should.be.a('number');
-        done();
-      });
+      }, done));
     });
 
     it('allows custom headers', done => {
@@ -401,24 +389,25 @@ describe('Model', () => {
       }, done));
     });
 
-    it('emits a "sync" event', () => {
+    it('emits a "sync" event', (done) => {
       var sync = sinon.stub();
       model.on('sync', sync);
-      model.save(() => {});
-      sync.should.have.been.calledOnce;
-      sync.should.have.been.calledWith(sinon.match({ method: 'POST' }));
+      model._request.yieldsAsync(null, success);
+      model.save(sandbox(() => {
+        sync.should.have.been.calledOnce;
+        sync.should.have.been.calledWith(sinon.match({ method: 'POST' }));
+      }, done));
     });
 
     it('emits a "fail" event on error', done => {
       model._request.yieldsAsync(null, fail);
-      model.on('fail', (err, data, settings, statusCode, responseTime) => {
+      model.on('fail', sandbox((err, data, settings, statusCode, responseTime) => {
         err.should.eql({ message: 'error', status: 500 });
         data.should.eql({ message: 'error' });
         settings.method.should.equal('POST');
         statusCode.should.equal(500);
         responseTime.should.be.a('number');
-        done();
-      });
+      }, done));
       model.save(() => {});
     });
 
@@ -436,12 +425,10 @@ describe('Model', () => {
 
     it('allows an empty response body', done => {
       model._request.yieldsAsync(null, empty);
-      model.save((err, data, responseTime) => {
+      model.save(sandbox((err, data) => {
         expect(err).to.be.null;
         data.should.eql({});
-        responseTime.should.be.a('number');
-        done();
-      });
+      }, done));
     });
 
     it('passes statusCode, response body and callback to `parseResponse`', done => {
@@ -464,6 +451,24 @@ describe('Model', () => {
       expect(() => {
         model.save();
       }).to.not.throw();
+    });
+
+    it('returns a promise if no callback is provided', () => {
+      model.save().should.be.a('promise');
+    });
+
+    it('resolves with response data', () => {
+      model._request.yieldsAsync(null, success);
+      return model.save().then(data => {
+        data.should.eql({ message: 'success' });
+      });
+    });
+
+    it('rejects with error on failure', () => {
+      model._request.yieldsAsync(null, fail);
+      return model.save().catch(err => {
+        err.should.eql({ message: 'error', status: 500 });
+      });
     });
 
   });
@@ -489,66 +494,54 @@ describe('Model', () => {
 
     it('calls callback with an error if API response returns an error code', done => {
       model._request.yieldsAsync(null, fail);
-      model.fetch((e, data, responseTime) => {
+      model.fetch(sandbox(e => {
         e.should.eql({ status: 500, message: 'error' });
-        responseTime.should.be.a('number');
-        done();
-      });
+      }, done));
     });
 
     it('calls callback with an error if model._request throws error event', done => {
       model._request.yieldsAsync(error, fail);
-      model.fetch((e, data, responseTime) => {
+      model.fetch(sandbox(e => {
         e.should.eql(error);
-        responseTime.should.be.a('number');
-        done();
-      });
+      }, done));
     });
 
     it('calls callback with no error and json data if response has success code', done => {
       model._request.yieldsAsync(null, success);
-      model.fetch((err, data, responseTime) => {
+      model.fetch(sandbox((err, data) => {
         expect(err).to.be.null;
         data.should.eql({ message: 'success' });
-        responseTime.should.be.a('number');
-        done();
-      });
+      }, done));
     });
 
     it('passes returned data through parse method on success', done => {
       sinon.stub(model, 'parse').returns({ parsed: 'message' });
       model._request.yieldsAsync(null, success);
-      model.fetch((err, data, responseTime) => {
+      model.fetch(sandbox((err, data) => {
         expect(err).to.be.null;
         model.parse.should.have.been.calledOnce;
         model.parse.should.have.been.calledWithExactly({ message: 'success' });
         data.should.eql({ parsed: 'message' });
-        responseTime.should.be.a('number');
-        done();
-      });
+      }, done));
     });
 
     it('does not parse response on error', done => {
       model._request.yieldsAsync(null, fail);
       sinon.stub(model, 'parse');
-      model.fetch((err, data, responseTime) => {
+      model.fetch(sandbox(err => {
         model.parse.should.not.have.been.called;
-        data.should.eql({ message: 'error' });
-        responseTime.should.be.a('number');
-        done();
-      });
+        err.should.eql({ message: 'error', status: 500 });
+      }, done));
     });
 
     it('calls callback with error if response is not valid json', done => {
       model._request.yieldsAsync(null, invalid);
-      model.fetch((err, data, responseTime) => {
+      model.fetch(sandbox((err, data) => {
         err.should.be.an.instanceOf(Error);
         err.status.should.equal(200);
         err.body.should.equal('invalid');
-        expect(data).to.be.null;
-        responseTime.should.be.a('number');
-        done();
-      });
+        expect(data).to.not.be.ok;
+      }, done));
     });
 
     it('passes options to url method if provided', () => {
@@ -590,11 +583,9 @@ describe('Model', () => {
         throw new Error('parse');
       };
       model._request.yieldsAsync(null, success);
-      model.fetch((err, data, responseTime) => {
+      model.fetch(sandbox(err => {
         err.should.eql(new Error('parse'));
-        responseTime.should.be.a('number');
-        done();
-      });
+      }, done));
     });
 
     it('includes auth setting if defined', done => {
@@ -657,12 +648,10 @@ describe('Model', () => {
 
     it('allows an empty response body', done => {
       model._request.yieldsAsync(null, empty);
-      model.fetch((err, data, responseTime) => {
+      model.fetch(sandbox((err, data) => {
         expect(err).to.be.null;
         data.should.eql({});
-        responseTime.should.be.a('number');
-        done();
-      });
+      }, done));
     });
 
     it('passes statusCode, response body and callback to `parseResponse`', done => {
@@ -685,6 +674,24 @@ describe('Model', () => {
       expect(() => {
         model.fetch();
       }).to.not.throw();
+    });
+
+    it('returns a promise if no callback is provided', () => {
+      model.fetch().should.be.a('promise');
+    });
+
+    it('resolves with response data', () => {
+      model._request.yieldsAsync(null, success);
+      return model.fetch().then(data => {
+        data.should.eql({ message: 'success' });
+      });
+    });
+
+    it('rejects with error on failure', () => {
+      model._request.yieldsAsync(null, fail);
+      return model.fetch().catch(err => {
+        err.should.eql({ message: 'error', status: 500 });
+      });
     });
   });
 
@@ -710,66 +717,54 @@ describe('Model', () => {
 
     it('calls callback with an error if API response returns an error code', done => {
       model._request.yieldsAsync(null, fail);
-      model.delete((e, data, responseTime) => {
+      model.delete(sandbox(e => {
         e.should.eql({ status: 500, message: 'error' });
-        responseTime.should.be.a('number');
-        done();
-      });
+      }, done));
     });
 
     it('calls callback with an error if model._request throws error event', done => {
       model._request.yieldsAsync(error, fail);
-      model.delete((e, data, responseTime) => {
+      model.delete(sandbox(e => {
         e.should.eql(error);
-        responseTime.should.be.a('number');
-        done();
-      });
+      }, done));
     });
 
     it('calls callback with no error and json data if response has success code', done => {
       model._request.yieldsAsync(null, success);
-      model.delete((err, data, responseTime) => {
+      model.delete(sandbox((err, data) => {
         expect(err).to.be.null;
         data.should.eql({ message: 'success' });
-        responseTime.should.be.a('number');
-        done();
-      });
+      }, done));
     });
 
     it('passes returned data through parse method on success', done => {
       sinon.stub(model, 'parse').returns({ parsed: 'message' });
       model._request.yieldsAsync(null, success);
-      model.delete((err, data, responseTime) => {
+      model.delete(sandbox((err, data) => {
         expect(err).to.be.null;
         model.parse.should.have.been.calledOnce;
         model.parse.should.have.been.calledWithExactly({ message: 'success' });
         data.should.eql({ parsed: 'message' });
-        responseTime.should.be.a('number');
-        done();
-      });
+      }, done));
     });
 
     it('does not parse response on error', done => {
       model._request.yieldsAsync(null, fail);
       sinon.stub(model, 'parse');
-      model.delete((err, data, responseTime) => {
+      model.delete(sandbox(err => {
         model.parse.should.not.have.been.called;
-        data.should.eql({ message: 'error' });
-        responseTime.should.be.a('number');
-        done();
-      });
+        err.should.eql({ message: 'error', status: 500 });
+      }, done));
     });
 
     it('calls callback with error if response is not valid json', done => {
       model._request.yieldsAsync(null, invalid);
-      model.delete((err, data, responseTime) => {
+      model.delete(sandbox((err, data) => {
         err.should.be.an.instanceOf(Error);
         err.status.should.equal(200);
         err.body.should.equal('invalid');
-        expect(data).to.be.null;
-        responseTime.should.be.a('number');
-        done();
-      });
+        expect(data).to.not.be.ok;
+      }, done));
     });
 
     it('passes options to url method if provided', () => {
@@ -811,11 +806,9 @@ describe('Model', () => {
         throw new Error('parse');
       };
       model._request.yieldsAsync(null, success);
-      model.delete((err, data, responseTime) => {
+      model.delete(sandbox(err => {
         err.should.eql(new Error('parse'));
-        responseTime.should.be.a('number');
-        done();
-      });
+      }, done));
     });
 
     it('emits a "sync" event', () => {
@@ -853,12 +846,10 @@ describe('Model', () => {
 
     it('allows an empty response body', done => {
       model._request.yieldsAsync(null, empty);
-      model.delete((err, data, responseTime) => {
+      model.delete(sandbox((err, data) => {
         expect(err).to.be.null;
         data.should.eql({});
-        responseTime.should.be.a('number');
-        done();
-      });
+      }, done));
     });
 
     it('passes statusCode, response body and callback to `parseResponse`', done => {
@@ -881,6 +872,24 @@ describe('Model', () => {
       expect(() => {
         model.delete();
       }).to.not.throw();
+    });
+
+    it('returns a promise if no callback is provided', () => {
+      model.delete().should.be.a('promise');
+    });
+
+    it('resolves with response data', () => {
+      model._request.yieldsAsync(null, success);
+      return model.delete().then(data => {
+        data.should.eql({ message: 'success' });
+      });
+    });
+
+    it('rejects with error on failure', () => {
+      model._request.yieldsAsync(null, fail);
+      return model.delete().catch(err => {
+        err.should.eql({ message: 'error', status: 500 });
+      });
     });
   });
 
@@ -922,13 +931,9 @@ describe('Model', () => {
       model.toJSON.restore();
     });
 
-    it('returns JSON data', () => {
-
-      var callback = sinon.stub();
-      model.prepare(callback);
-      callback.should.have.been.calledOnce;
-      callback.should.have.been.calledWith(null, {
-        name: 'Test name'
+    it('resolves with json', () => {
+      return model.prepare().then(data => {
+        data.should.eql({ name: 'Test name' });
       });
     });
   });
