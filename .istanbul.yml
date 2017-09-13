@@ -1,0 +1,11 @@
+instrumentation:
+    include-all-sources: true
+    excludes:
+        - 'index.js'
+
+check:
+    global:
+        statements: 96.1
+        branches: 93.14
+        functions: 95.24
+        lines: 96.08

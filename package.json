@@ -4,11 +4,13 @@
   "description": "Simple model for interacting with http/rest apis.",
   "main": "index.js",
   "scripts": {
-    "test": "npm run lint && npm run cover",
+    "pretest": "npm run lint",
+    "test": "npm run unit",
+    "posttest": "npm run cover && npm run check-coverage",
     "lint": "eslint ./",
     "unit": "mocha test/spec/ --recursive --require test/helper",
-    "cover": "istanbul cover _mocha -- test/spec/ --recursive --require test/helper",
-    "check-coverage": "istanbul check-coverage --statement 100 --branch 100 --function 100 --line 100",
+    "cover": "istanbul cover _mocha -- test/spec/ --recursive --require test/helper --reporter dot",
+    "check-coverage": "istanbul check-coverage",
     "snyk": "snyk test"
   },
   "repository": {
@@ -33,6 +35,7 @@
     "eslint": "^2.10.2",
     "istanbul": "^0.4.3",
     "mocha": "^2.1.0",
+    "proxyquire": "^1.8.0",
     "sinon": "^1.12.2",
     "sinon-chai": "^2.6.0",
     "snyk": "^1.24.5"
