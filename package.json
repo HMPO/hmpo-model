@@ -27,16 +27,18 @@
   },
   "homepage": "https://github.com/UKHomeOffice/passports-model",
   "dependencies": {
+    "hmpo-logger": "^3.0.0",
+    "lodash.kebabcase": "^4.1.1",
     "request": "^2.72.0",
     "underscore": "^1.7.0"
   },
   "devDependencies": {
-    "chai": "^3.5.0",
-    "eslint": "^2.10.2",
+    "chai": "^4.1.2",
+    "eslint": "^4.6.1",
     "istanbul": "^0.4.3",
-    "mocha": "^2.1.0",
+    "mocha": "^3.5.0",
     "proxyquire": "^1.8.0",
-    "sinon": "^1.12.2",
+    "sinon": "^3.2.1",
     "sinon-chai": "^2.6.0",
     "snyk": "^1.24.5"
   }
