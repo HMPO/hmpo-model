@@ -1,7 +1,5 @@
 instrumentation:
     include-all-sources: true
-    excludes:
-        - 'index.js'
 
 check:
     global:

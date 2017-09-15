@@ -8,8 +8,8 @@
     "test": "npm run unit",
     "posttest": "npm run cover && npm run check-coverage",
     "lint": "eslint ./",
-    "unit": "mocha test/spec/ --recursive --require test/helper",
-    "cover": "istanbul cover _mocha -- test/spec/ --recursive --require test/helper --reporter dot",
+    "unit": "mocha test/ --recursive --require test/helper",
+    "cover": "istanbul cover _mocha -- test/ --recursive --require test/helper --reporter dot",
     "check-coverage": "istanbul check-coverage",
     "snyk": "snyk test"
   },
