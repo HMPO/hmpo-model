@@ -1,6 +1,6 @@
 {
   "name": "hmpo-model",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Simple model for interacting with http/rest apis.",
   "main": "index.js",
   "scripts": {
