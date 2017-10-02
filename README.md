@@ -1,7 +1,28 @@
 # hmpo-model
-Simple model for interacting with http/rest apis.
+* localModel - Simple model for data persistance
+* remoteModel - Simple model for interacting with http/rest apis.
 
-## Usage
+## Local Model Usage
+### get
+* gets a model property via a key
+
+### set
+* sets a property on the model to a value and dispatches events
+
+### unset
+* unsets a property
+
+### reset
+* resets a model
+* suppresses `change` event notifications if `options.silent` is set
+
+### increment
+* Increments a property
+
+### toJSON
+* returns a JSON representation of the data in the model
+
+## Remote Model Usage
 
 Normally this would be used as an abstract class and extended with your own implementation.
 
