@@ -605,6 +605,13 @@ describe('Remote Model', () => {
 
             expect(url).to.be.undefined;
         });
+
+        it('should return a url from options', () => {
+            model.options.url = 'http://www.example.com';
+            let url = model.url();
+
+            url.should.equal('http://www.example.com');
+        });
     });
 
     describe('parse', () => {
