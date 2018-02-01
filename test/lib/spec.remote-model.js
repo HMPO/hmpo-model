@@ -782,7 +782,8 @@ describe('Remote Model', () => {
                         body: 'Err Body'
                     },
                     data: {
-                        error: 'Data Error'
+                        error: 'Data Error',
+                        errors: 'Data Errors'
                     }
                 };
             });
@@ -823,6 +824,16 @@ describe('Remote Model', () => {
 
                     result.should.have.property('outError').that.equals(
                         'Data Error'
+                    );
+                });
+                it('should fallback to use data.errors', () => {
+                    delete data.err;
+                    delete data.data.error;
+
+                    let result = model.logMeta(data);
+
+                    result.should.have.property('outError').that.equals(
+                        'Data Errors'
                     );
                 });
             });
