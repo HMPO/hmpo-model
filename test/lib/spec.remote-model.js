@@ -223,15 +223,29 @@ describe('Remote Model', () => {
         });
 
         describe('with headers supplied into the constructor', () => {
+            let constructorOptions;
+
             beforeEach(() => {
-                model = new Model(null, {
+                constructorOptions = {
                     headers: {
                         'X-Constructor': 'Constructor'
                     }
-                });
+                };
+
+                model = new Model(null, constructorOptions);
 
                 sinon.stub(model, 'url');
                 sinon.stub(model, 'auth');
+            });
+
+            it('should use headers in constructor if there are no configured headers', () => {
+                let returnedConfig = model.requestConfig({
+                    method: 'GET'
+                });
+
+                returnedConfig.should.have.property('headers').that.deep.equals({
+                    'X-Constructor': 'Constructor'
+                });
             });
 
             it('should combine headers in options with headers in config', () => {
@@ -244,11 +258,11 @@ describe('Remote Model', () => {
 
                 returnedConfig.should.have.property('headers').that.deep.equals({
                     'X-Header': 'Config',
-                    'X-Constructor': 'Constructor',
+                    'X-Constructor': 'Constructor'
                 });
             });
 
-            it('should override headers in options with headers from config', () => {
+            it('should override headers from the constructor with headers from config', () => {
                 let returnedConfig = model.requestConfig({
                     method: 'GET',
                     headers: {
@@ -258,6 +272,19 @@ describe('Remote Model', () => {
 
                 returnedConfig.should.have.property('headers').that.deep.equals({
                     'X-Constructor': 'Config'
+                });
+            });
+
+            it('should not mutate the constructor options', () => {
+                model.requestConfig({
+                    method: 'GET',
+                    headers: {
+                        'X-Header': 'Config'
+                    }
+                });
+
+                constructorOptions.headers.should.deep.equal({
+                    'X-Constructor': 'Constructor'
                 });
             });
         });
