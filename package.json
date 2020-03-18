@@ -6,7 +6,7 @@
   "scripts": {
     "pretest": "npm run lint",
     "test": "npm run unit",
-    "posttest": "npm run check-coverage && npm audit",
+    "posttest": "npm run check-coverage && npm audit --production",
     "lint": "eslint .",
     "unit": "nyc --reporter=lcov --reporter=text-summary _mocha test/ --recursive --require test/helper",
     "check-coverage": "nyc check-coverage"
@@ -25,19 +25,19 @@
   },
   "homepage": "https://github.com/UKHomeOffice/passports-model",
   "dependencies": {
-    "hmpo-logger": "^4.0.0",
+    "hmpo-logger": "^4.0.2",
     "lodash.kebabcase": "^4.1.1",
-    "request": "^2.72.0",
+    "request": "^2.88.2",
     "underscore": "^1.9.2"
   },
   "devDependencies": {
     "chai": "^4.1.2",
     "eslint": "^6.8.0",
-    "mocha": "^7.0.1",
+    "mocha": "^7.1.1",
     "nyc": "^15.0.0",
     "proxyquire": "^2.0.0",
-    "sinon": "^8.1.1",
-    "sinon-chai": "^3.4.0"
+    "sinon": "^9.0.1",
+    "sinon-chai": "^3.5.0"
   },
   "nyc": {
     "all": true,
