@@ -18,7 +18,7 @@
   "author": "PEX",
   "license": "MIT",
   "engines": {
-    "node": ">=8"
+    "node": ">=10"
   },
   "bugs": {
     "url": "https://github.com/UKHomeOffice/passports-model/issues"

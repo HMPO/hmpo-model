@@ -384,13 +384,24 @@ describe('Remote Model', () => {
             });
         });
 
-        it('should emit a fail event', () => {
+        it('should emit a sync event', () => {
             model.request(settings, cb);
 
             model.emit.should.have.been.calledWithExactly(
                 'sync',
                 settings
             );
+        });
+
+        it('should fire sync hook', () => {
+            let hook = sinon.stub();
+            model.options.hooks = { sync: hook };
+            model.request(settings, cb);
+
+            hook.should.have.been.calledWithExactly({
+                settings: settings
+            });
+            hook.should.have.been.calledOn(model);
         });
 
         it('should work without a callback', () => {
@@ -476,6 +487,22 @@ describe('Remote Model', () => {
                     data: null
                 });
             });
+
+            it('should fire fail hook', () => {
+                let hook = sinon.stub();
+                model.options.hooks = { fail: hook };
+
+                model.request(settings, cb);
+
+                hook.should.have.been.calledWithExactly({
+                    settings: settings,
+                    statusCode: 418,
+                    responseTime: sinon.match.number,
+                    err: error,
+                    data: null
+                });
+                hook.should.have.been.calledOn(model);
+            });
         });
 
         context('on success', () => {
@@ -495,7 +522,8 @@ describe('Remote Model', () => {
                     responseTime: sinon.match.number
                 });
             });
-            it('should emit a sync event', () => {
+
+            it('should emit a success event', () => {
                 model.request(settings, cb);
 
                 model.emit.should.have.been.calledWithExactly(
@@ -505,6 +533,19 @@ describe('Remote Model', () => {
                     200,
                     sinon.match.number
                 );
+            });
+
+            it('should fire success hook', () => {
+                let hook = sinon.stub();
+                model.options.hooks = { success: hook };
+                model.request(settings, cb);
+
+                hook.should.have.been.calledWithExactly({
+                    statusCode: 200,
+                    settings: settings,
+                    responseTime: sinon.match.number
+                });
+                hook.should.have.been.calledOn(model);
             });
         });
     });
