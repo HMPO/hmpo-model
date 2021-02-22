@@ -107,3 +107,26 @@ model.on('success', function (data, settings, statusCode, responseTime) { });
 model.on('fail', function (err, data, settings, statusCode, responseTime) { });
 ```
 
+## Hooks
+
+API requests will fire hooks specified in model options as part of their lifecycle.
+
+```javascript
+new Model(null, options);
+```
+
+`sync` hook is fired when an API request is sent
+```javascript
+options.hooks.sync({ settings });
+```
+
+`success` hook is fired when an API request successfully completes
+```javascript
+options.hooks.success({ data, settings, statusCode, responseTime });
+```
+
+`fail` hook is fired when an API request fails
+```javascript
+options.hooks.fail({ err, data, settings, statusCode, responseTime });
+```
+
