@@ -31,14 +31,21 @@ describe('Remote Model', () => {
     });
 
     describe('constructor', () => {
+        let Model;
+
+        beforeEach(() => {
+            Model = require('../../lib/remote-model');
+            sinon.stub(Model.prototype, 'setLogger');
+        });
 
         it('should call setLogger', () => {
-            let Model = require('../../lib/remote-model');
-            sinon.stub(Model.prototype, 'setLogger');
-
             model = new Model();
-
             model.setLogger.should.have.been.calledWithExactly();
+        });
+
+        it('should set model label name', () => {
+            model = new Model();
+            model.options.label.should.equal('remote-model');
         });
 
         afterEach(() => {
@@ -541,6 +548,7 @@ describe('Remote Model', () => {
                 model.request(settings, cb);
 
                 hook.should.have.been.calledWithExactly({
+                    data: {'data': 'value'},
                     statusCode: 200,
                     settings: settings,
                     responseTime: sinon.match.number
