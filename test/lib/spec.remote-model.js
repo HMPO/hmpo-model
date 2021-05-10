@@ -54,16 +54,36 @@ describe('Remote Model', () => {
     });
 
     describe('setLogger', () => {
-        let getStub = sinon.stub();
-        let Model = proxyquire('../../lib/remote-model', {
-            'hmpo-logger': {
-                get: getStub
-            }
+        let getStub, Model;
+
+        beforeEach(() => {
+            getStub = sinon.stub();
+            getStub.returns('logger');
+
+            Model = proxyquire('../../lib/remote-model', {
+                'hmpo-logger': {
+                    get: getStub
+                }
+            });
         });
 
-        model = new Model();
+        it('should set up a new hmpo-logger', () => {
+            model = new Model();
 
-        getStub.should.have.been.calledWithExactly(':remote-model');
+            getStub.should.have.been.calledWithExactly(':remote-model');
+            model.logger.should.equal('logger');
+        });
+
+        it('should use console if hmpo-logger is not available', () => {
+            getStub.throws(new Error());
+
+            model = new Model();
+
+            model.logger.should.eql({
+                outbound: console.log,
+                trimHtml: _.identity
+            });
+        });
     });
 
     describe('fetch', () => {
