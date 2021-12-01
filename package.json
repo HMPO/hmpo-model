@@ -25,8 +25,10 @@
   },
   "homepage": "https://github.com/UKHomeOffice/passports-model",
   "dependencies": {
+    "debug": "^4.3.3",
+    "got": "^11.8.3",
+    "hpagent": "^0.1.2",
     "lodash.kebabcase": "^4.1.1",
-    "request": "^2.88.2",
     "underscore": "^1.13.1"
   },
   "devDependencies": {
