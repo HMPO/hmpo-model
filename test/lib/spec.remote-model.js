@@ -1,14 +1,16 @@
 'use strict';
 
-const proxyquire = require('proxyquire');
+const Model = require('../../lib/remote-model');
 const BaseModel = require('../../lib/local-model');
 const _ = require('underscore');
+const logger = require('hmpo-logger');
+
+const { HttpProxyAgent, HttpsProxyAgent } = require('hpagent');
 
 describe('Remote Model', () => {
-    let model, Model, cb, mocks;
+    let model, cb, mocks;
 
     beforeEach(() => {
-        Model = require('../../lib/remote-model');
         model = new Model();
 
         cb = sinon.stub();
@@ -24,7 +26,6 @@ describe('Remote Model', () => {
     });
 
     it('should be an instance of LocalModel', () => {
-        Model = require('../../lib/remote-model');
         model = new Model();
 
         model.should.be.an.instanceOf(BaseModel);
@@ -54,35 +55,30 @@ describe('Remote Model', () => {
     });
 
     describe('setLogger', () => {
-        let getStub, Model;
-
         beforeEach(() => {
-            getStub = sinon.stub();
-            getStub.returns('logger');
+            sinon.stub(logger, 'get').returns('logger');
+        });
 
-            Model = proxyquire('../../lib/remote-model', {
-                'hmpo-logger': {
-                    get: getStub
-                }
-            });
+        afterEach(() => {
+            logger.get.restore();
         });
 
         it('should set up a new hmpo-logger', () => {
             model = new Model();
 
-            getStub.should.have.been.calledWithExactly(':remote-model');
+            logger.get.should.have.been.calledWithExactly(':remote-model');
             model.logger.should.equal('logger');
         });
 
-        it('should use console if hmpo-logger is not available', () => {
-            getStub.throws(new Error());
+        it('should use console log and a trimHtml pass-through if hmpo-logger is not available', () => {
+            logger.get.throws(new Error());
 
             model = new Model();
 
-            model.logger.should.eql({
-                outbound: console.log,
-                trimHtml: _.identity
-            });
+            model.logger.outbound.should.eql(console.log);
+            model.logger.trimHtml.should.be.a('function');
+            const html = {};
+            model.logger.trimHtml(html).should.equal(html);
         });
     });
 
@@ -104,6 +100,15 @@ describe('Remote Model', () => {
                 method: 'GET'
             });
         });
+
+        it('should pass args onto requestConfig', () => {
+            model.fetch({ foo: 'bar' }, cb);
+
+            model.requestConfig.should.have.been.calledWithExactly({
+                method: 'GET'
+            }, { foo: 'bar' });
+        });
+
         it('should call request', () => {
             model.requestConfig.returns(mocks.config);
 
@@ -129,9 +134,9 @@ describe('Remote Model', () => {
         it('should call prepare', () => {
             model.save(cb);
 
-            model.prepare.should.have.been.called;
-
+            model.prepare.should.have.been.calledWithExactly(sinon.match.func);
         });
+
         it('should call callback with an error', () => {
             let error = new Error('error');
             model.prepare.yields(error);
@@ -139,7 +144,6 @@ describe('Remote Model', () => {
             model.save(cb);
 
             cb.should.have.been.calledWith(error);
-
         });
 
         context('on prepare success', () => {
@@ -155,20 +159,27 @@ describe('Remote Model', () => {
             it('should use requestConfig', () => {
                 model.save(cb);
 
-                model.requestConfig.should.have.been.calledWith({
+                model.requestConfig.should.have.been.calledWithExactly({
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Content-Length': Buffer.byteLength(JSON.stringify(preparedData))
-                    }
-                });
+                    json: preparedData
+                }, undefined);
             });
+
+            it('should pass args onto requestConfig', () => {
+                model.save({ foo: 'bar' }, cb);
+
+                model.requestConfig.should.have.been.calledWithExactly({
+                    method: 'POST',
+                    json: preparedData
+                }, { foo: 'bar' });
+            });
+
             it('should call request', () => {
                 model.requestConfig.returns(mocks.config);
 
                 model.save(cb);
 
-                model.request.should.have.been.calledWith(mocks.config, JSON.stringify(preparedData), cb);
+                model.request.should.have.been.calledWith(mocks.config, cb);
             });
         });
 
@@ -192,6 +203,15 @@ describe('Remote Model', () => {
                 method: 'DELETE'
             });
         });
+
+        it('should pass args onto requestConfig', () => {
+            model.delete({ foo: 'bar' }, cb);
+
+            model.requestConfig.should.have.been.calledWithExactly({
+                method: 'DELETE'
+            }, { foo: 'bar' });
+        });
+
         it('should call request', () => {
             model.requestConfig.returns(mocks.config);
 
@@ -202,50 +222,227 @@ describe('Remote Model', () => {
     });
 
     describe('requestConfig', () => {
-        beforeEach(() => {
-            sinon.stub(model, 'url');
-            sinon.stub(model, 'auth');
+        describe('url', () => {
+            it('should use url from model options', () => {
+                model.options.url = 'https://example.com/options';
+                const config = model.requestConfig({
+                    'method': 'VERB'
+                });
 
-            model.url.returns('http://example.net');
-        });
-
-        afterEach(() => {
-            model.url.restore();
-            model.auth.restore();
-        });
-
-
-        it('should use url', () => {
-            model.requestConfig({
-                'method': 'VERB'
+                config.url.should.equal('https://example.com/options');
             });
 
-            model.url.should.have.been.calledWithExactly();
+            it('should use url from request config', () => {
+                model.options.url = 'https://example.com/options';
+                const config = model.requestConfig({
+                    'method': 'VERB',
+                    'url': 'https://example.com/config'
+                });
+
+                config.url.should.equal('https://example.com/config');
+            });
+
+            it('should use url returned by overridden url() method', () => {
+                model.options.url = 'https://example.com/options';
+                model.url = sinon.stub().returns('https://example.com/overridden');
+                const config = model.requestConfig({
+                    'method': 'VERB',
+                    'url': 'https://example.com/config'
+                });
+                model.url.should.have.been.calledWithExactly('https://example.com/config', undefined);
+                config.url.should.equal('https://example.com/overridden');
+            });
+
+            it('should pass args onto url method', () => {
+                model.url = sinon.stub().returns('https://example.com/overridden');
+                const config = model.requestConfig({
+                    'method': 'VERB',
+                    'url': 'https://example.com/config'
+                }, { foo: 'bar' });
+                model.url.should.have.been.calledWithExactly('https://example.com/config', { foo: 'bar' });
+                config.url.should.equal('https://example.com/overridden');
+            });
         });
 
-        it('should use auth', () => {
-            model.requestConfig({
-                'method': 'VERB'
+        describe('auth', () => {
+            it('should use auth from model options', () => {
+                model.options.auth = 'options:pass:word';
+                const config = model.requestConfig({
+                    'method': 'VERB'
+                });
+
+                config.username.should.equal('options');
+                config.password.should.equal('pass:word');
+                config.should.not.have.property('auth');
             });
 
-            model.auth.should.have.been.calledWithExactly();
+            it('should use auth from config', () => {
+                model.options.auth = 'options:pass:word';
+                const config = model.requestConfig({
+                    'method': 'VERB',
+                    'auth': 'config:pass:word'
+                });
+
+                config.username.should.equal('config');
+                config.password.should.equal('pass:word');
+                config.should.not.have.property('auth');
+            });
+
+            it('should use auth from overidden auth() method', () => {
+                model.options.auth = 'options:pass:word';
+                model.auth = sinon.stub().returns({ user: 'overridden', pass: 'pass:word' });
+                const config = model.requestConfig({
+                    'method': 'VERB',
+                    'auth': 'config:pass:word'
+                });
+
+                model.auth.should.have.been.calledWithExactly('config:pass:word');
+                config.username.should.equal('overridden');
+                config.password.should.equal('pass:word');
+                config.should.not.have.property('auth');
+            });
         });
 
-        it('should add auth to config if provided', () => {
-            model.auth.returns({
-                user: 'username',
-                pass: 'password'
+        describe('timeout', () => {
+            it('should use a default timeout', () => {
+                const config = model.requestConfig({
+                    'method': 'VERB'
+                });
+
+                config.should.deep.include({
+                    timeout: {
+                        connect: 60000,
+                        lookup: 60000,
+                        response: 60000,
+                        secureConnect: 60000,
+                        send: 60000,
+                        socket: 60000
+                    }
+                });
             });
 
-            let returnedConfig = model.requestConfig({
-                'method': 'VERB'
+            it('should use timeout from model options', () => {
+                model.options.timeout = 1000;
+                const config = model.requestConfig({
+                    'method': 'VERB'
+                });
+
+                config.should.deep.include({
+                    timeout: {
+                        connect: 1000,
+                        lookup: 1000,
+                        response: 1000,
+                        secureConnect: 1000,
+                        send: 1000,
+                        socket: 1000
+                    }
+                });
             });
 
-            returnedConfig.should.deep.include({
-                auth: {
-                    user: 'username',
-                    pass: 'password'
-                }
+            it('should use timeout from config', () => {
+                model.options.timeout = 1000;
+                const config = model.requestConfig({
+                    'method': 'VERB',
+                    'timeout': 2000
+                });
+
+                config.should.deep.include({
+                    timeout: {
+                        connect: 2000,
+                        lookup: 2000,
+                        response: 2000,
+                        secureConnect: 2000,
+                        send: 2000,
+                        socket: 2000
+                    }
+                });
+            });
+
+            it('should use timeout from specified object', () => {
+                const config = model.requestConfig({
+                    'method': 'VERB',
+                    'timeout': { connect: 3000 }
+                });
+
+                config.should.deep.include({
+                    timeout: {
+                        connect: 3000,
+                    }
+                });
+            });
+
+            it('should use timeout from overidden timeout() method', () => {
+                model.timeout = sinon.stub().returns({ connect: 4000 });
+                const config = model.requestConfig({
+                    'method': 'VERB',
+                    'timeout': 2000
+                });
+
+                model.timeout.should.have.been.calledWithExactly(2000);
+                config.should.deep.include({
+                    timeout: {
+                        connect: 4000,
+                    }
+                });
+            });
+        });
+
+        describe('proxy', () => {
+            it('should not set up http proxy if there is no url', () => {
+                const returnedConfig = model.requestConfig({
+                    'method': 'VERB',
+                    'proxy': 'http://proxy.example.com:8000'
+                });
+
+                returnedConfig.should.not.have.property('proxy');
+                returnedConfig.should.not.have.property('agent');
+            });
+
+            it('should set up http proxy if specified', () => {
+                const returnedConfig = model.requestConfig({
+                    'method': 'VERB',
+                    'url': 'http://example.net',
+                    'proxy': 'http://proxy.example.com:8000'
+                });
+
+                sinon.assert.match(returnedConfig, {
+                    agent: {
+                        http: sinon.match.instanceOf(HttpProxyAgent)
+                    }
+                });
+            });
+
+            it('should set up https proxy if specified', () => {
+                const returnedConfig = model.requestConfig({
+                    'method': 'VERB',
+                    'url': 'https://example.net',
+                    'proxy': 'http://proxy.example.com:8000'
+                });
+
+                sinon.assert.match(returnedConfig, {
+                    agent: {
+                        https: sinon.match.instanceOf(HttpsProxyAgent)
+                    }
+                });
+            });
+
+            it('should pass proxy options to the new proxy', () => {
+                const returnedConfig = model.requestConfig({
+                    'method': 'VERB',
+                    'url': 'http://example.net',
+                    'proxy': {
+                        proxy: 'http://proxy.example.com:8000',
+                        keepAlive: true
+                    }
+                });
+
+                sinon.assert.match(returnedConfig, {
+                    agent: {
+                        http: {
+                            keepAlive: true
+                        }
+                    }
+                });
             });
         });
 
@@ -357,14 +554,15 @@ describe('Remote Model', () => {
     });
 
     describe('request', () => {
-        let settings, body, requestSettings;
+        let settings, requestSettings, mocks;
 
         beforeEach(() => {
-            let Model = proxyquire('../../lib/remote-model', {
-                'request': mocks.request
-            });
-
+            mocks = {};
+            mocks.got = sinon.stub().returns(mocks);
+            mocks.then = sinon.stub().returns(mocks);
+            mocks.catch = sinon.stub().returns(mocks);
             model = new Model();
+            model.got = mocks.got;
 
             sinon.stub(model, 'logSync');
             sinon.stub(model, 'logSuccess');
@@ -385,22 +583,11 @@ describe('Remote Model', () => {
             model.emit.restore();
         });
 
-        it('should invoke request with settings including a body', () => {
-            requestSettings.body = body;
-
-            model.request(settings, body, cb);
-
-            mocks.request.should.have.been.called;
-            mocks.request.should.have.been.calledWith(requestSettings);
-        });
-
         it('should invoke request with request settings', () => {
-            requestSettings.body = undefined;
-
             model.request(settings, cb);
 
-            mocks.request.should.have.been.called;
-            mocks.request.should.have.been.calledWith(requestSettings);
+            mocks.got.should.have.been.called;
+            mocks.got.should.have.been.calledWith(requestSettings);
         });
 
         it('should log sync messages', () => {
@@ -432,7 +619,7 @@ describe('Remote Model', () => {
         });
 
         it('should work without a callback', () => {
-            mocks.request.yields(new Error('Random Error'), {});
+            mocks.catch.yields(new Error('Random Error'));
 
             model.request(settings);
 
@@ -451,7 +638,9 @@ describe('Remote Model', () => {
                     'statusCode': 418
                 };
 
-                mocks.request.yields(error, response);
+                error.response = response;
+
+                mocks.catch.yields(error);
             });
 
             it('should log error messages', () => {
@@ -534,7 +723,7 @@ describe('Remote Model', () => {
 
         context('on success', () => {
             beforeEach(() => {
-                mocks.request.yields(null, {
+                mocks.then.yields({
                     'body': JSON.stringify({'data': 'value'}),
                     'statusCode': 200
                 });
@@ -641,6 +830,7 @@ describe('Remote Model', () => {
 
         afterEach(() => {
             model.parse.restore();
+
             model.parseError.restore();
         });
 
@@ -714,6 +904,17 @@ describe('Remote Model', () => {
         it('returns data passed', () => {
             model.parse({ data: 1 }).should.eql({ data: 1 });
         });
+
+        it('sets the parsed data to the model', () => {
+            model.parse({ foo: 'bar' });
+            model.get('foo').should.equal('bar');
+        });
+
+        it('does not set if the data falsey', () => {
+            model.set = sinon.stub();
+            model.parse(null);
+            model.set.should.not.have.been.called;
+        });
     });
 
     describe('parseError', () => {
@@ -743,12 +944,11 @@ describe('Remote Model', () => {
         });
 
         it('should return parsed credentials if credentials is a string', () => {
-            let credentials = model.auth('username:password');
+            let credentials = model.auth('username:pass:word');
 
             credentials.should.deep.equal({
-                user: 'username',
-                pass: 'password',
-                sendImmediately: true
+                username: 'username',
+                password: 'pass:word'
             });
 
         });
@@ -767,21 +967,21 @@ describe('Remote Model', () => {
 
 
     describe('logging', () => {
-        let logger;
+        let mocks;
 
         beforeEach(() => {
-            logger = {
+            mocks = {
                 outbound: sinon.stub(),
                 trimHtml: sinon.stub()
             };
-
-            let Model = proxyquire('../../lib/remote-model', {
-                'hmpo-logger': {
-                    get: () => logger,
-                }
-            });
+            sinon.stub(logger, 'get').returns(mocks);
 
             model = new Model();
+
+        });
+
+        afterEach(() => {
+            logger.get.restore();
         });
 
         describe('logSync', () => {
@@ -789,7 +989,7 @@ describe('Remote Model', () => {
                 let args = {
                     settings: {
                         method: 'VERB',
-                        uri: 'http://example.org'
+                        url: 'http://example.org'
                     }
                 };
 
@@ -800,7 +1000,7 @@ describe('Remote Model', () => {
 
                 model.logSync(args);
 
-                logger.outbound.should.have.been.calledWithExactly(
+                mocks.outbound.should.have.been.calledWithExactly(
                     'Model request sent :outVerb :outRequest',
                     argsAsMeta
                 );
@@ -812,7 +1012,7 @@ describe('Remote Model', () => {
                 let args = {
                     settings: {
                         method: 'VERB',
-                        uri: 'http://example.org'
+                        url: 'http://example.org'
                     },
                     statusCode: 418,
                     responseTime: 1000
@@ -827,7 +1027,7 @@ describe('Remote Model', () => {
 
                 model.logError(args);
 
-                logger.outbound.should.have.been.calledWithExactly(
+                mocks.outbound.should.have.been.calledWithExactly(
                     'Model request failed :outVerb :outRequest :outResponseCode :outError',
                     argsAsMeta
                 );
@@ -839,7 +1039,7 @@ describe('Remote Model', () => {
                 let args = {
                     settings: {
                         method: 'VERB',
-                        uri: 'http://example.org'
+                        url: 'http://example.org'
                     },
                     statusCode: 418,
                     responseTime: 1000
@@ -854,7 +1054,7 @@ describe('Remote Model', () => {
 
                 model.logSuccess(args);
 
-                logger.outbound.should.have.been.calledWithExactly(
+                mocks.outbound.should.have.been.calledWithExactly(
                     'Model request success :outVerb :outRequest :outResponseCode',
                     argsAsMeta
                 );
@@ -869,7 +1069,7 @@ describe('Remote Model', () => {
                 data = {
                     settings: {
                         method: 'VERB',
-                        uri: 'http://example.org'
+                        url: 'http://example.org'
                     },
                     statusCode: 418,
                     responseTime: 3000,
@@ -944,7 +1144,7 @@ describe('Remote Model', () => {
                 });
 
                 it('should be present with error', () => {
-                    logger.trimHtml.returns('Html Body');
+                    mocks.trimHtml.returns('Html Body');
 
                     let result = model.logMeta(data);
 

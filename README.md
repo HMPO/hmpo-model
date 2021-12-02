@@ -2,88 +2,134 @@
 * localModel - Simple model for data persistance
 * remoteModel - Simple model for interacting with http/rest apis.
 
+## Upgrading
+
+The deprecated `request` library has been replaced with `got`. The API is very similar, and some args are translated, like auth, and proxy.
+The new `got` library doesn't automativally use the proxy environment variables so you would need to use something like `global-agent` in your
+app if you need to specify proxies by environment arguments.
+
+The `request` method no longer takes a body. This should be inserted as `json`, `body`, or `form` into the `requestConfig` method.
+
 ## Local Model Usage
-### get
+### `get(name)`
 * gets a model property via a key
 
-### set
+### `set(name, value)` or `set({ name: value })`
 * sets a property on the model to a value and dispatches events
 
-### unset
+### `unset(name)`
 * unsets a property
 
-### reset
+### `reset([options])`
 * resets a model
 * suppresses `change` event notifications if `options.silent` is set
 
-### increment
+### `increment(name)`
 * Increments a property
 
-### toJSON
+### `toJSON()`
 * returns a JSON representation of the data in the model
 
 ## Remote Model Usage
 
 Normally this would be used as an abstract class and extended with your own implementation.
 
-Implementations would normally define at least a `url` method to define the target of API calls.
+Implementations would normally define at least a `url():url` method to define the target of API calls.
+
+Example implimentation:
+```javascript
+class MyModel extends HmpoModel {
+    url() {
+        return super.url('https://my.example.com/url')
+    }
+
+    auth() {
+        return super.auth('username:password');
+    }
+
+    requestConfig(config) {
+        config.proxy = 'http://proxy.example.com:3128'
+        return super.requestConfig(config);
+    }
+
+    // add data to JSON post body
+    prepare(callback) {
+        super.prepare((err, data) => {
+            if (err) return callback(err);
+            data.foo = 'bar';
+            callback(null, data);
+        });
+    }
+
+    // transform returned data
+    parse(data) {
+        data.additionalItem = true;
+        return super.parse(data);
+    }
+}
+
+const model = new MyModel();
+model.set('boo', 'baz');
+model.save((err, data, responseTime) => {
+    if (err) return console.error(err);
+    console.log(data);
+});
+```
 
 There are three methods for API interaction corresponding to GET, POST, and DELETE http methods:
 
-### `fetch`
+### `fetch([args, ][callback])`
+
+`fetch` performs a `GET` request on the url
 
 ```javascript
-var model = new Model();
-model.fetch(function (err, data, responseTime) {
+const model = new Model();
+model.fetch((err, data, responseTime) => {
     console.log(data);
 });
 ```
+#### Request
+- Request args for the `got` library, can be set by overriding the `requestConfig({}):{}` method.
 
-### `save`
+- The `url` can be configured either by setting a default in the model options or `requestConfig()` data, or by overriding the `url(default, args):url` method.
+
+- `proxy`, `timeout`, and basic `auth` can be set in the same way, using model options, setting in `requestConfig()`, or by overriding a method.
+- Specifying a `proxy` will set up a proxy tunneling `agent` for the request.
+- Specifying a numeric `timeout` will set the same timeout for all `got` timeout values.
+- Basic `auth` can be a colon separated string, or a `{username, password}` or `{user, pass}` object.
+
+#### Response
+- The returned body will be expected to be in JSON format.
+- If `statusCode < 400` the JSON response will be set to the model.
+This behaviour can be changed by overriding the `parse(data):data` method.
+- If `statusCode >= 400` the data will be passed to the `parseError(statusCode, data):error` method, and the `fetch` callback will be called with the returned error.
+- If response statuses need to be treated differently than the above, the `parseResponse(statusCode, data, cb)` method can be overridden.
+- If the response body is not going to be JSON, the `handleResponse(response, cb)` method can be overridden.
+
+### `save([args, ][callback])`
+
+`save` performs a `POST` request on the url
 
 ```javascript
-var model = new Model();
+const model = new Model();
 model.set({
     property: 'properties are sent as JSON request body by default'
 });
-model.save(function (err, data, responseTime) {
+model.save((err, data, responseTime) => {
     console.log(data);
 });
 ```
 
-The method can also be overwritten by passing options
+- By default the post body will be a JSON encoded object containing all attributes set to the model using, extracted using `model.toJSON()`. This behaviour can be changed by overriding the `prepare(callback(err, data))` method.
+- The response and body will be treated the same way as the `fetch` request above.
+
+### `delete([args, ][callback])`
+
+`delete` performs a `DELETE` request on the url
 
 ```javascript
-var model = new Model();
-model.set({
-    property: 'this will be sent as a PUT request'
-});
-model.save({ method: 'PUT' }, function (err, data, responseTime) {
-    console.log(data);
-});
-```
-
-### `delete`
-
-```javascript
-var model = new Model();
-model.delete(function (err, data) {
-    console.log(data);
-});
-```
-
-If no `url` method is defined then the model will use the options parameter and [Node's url.format method](https://nodejs.org/api/url.html#url_url_format_urlobj) to construct a URL.
-
-```javascript
-var model = new Model();
-
-// make a GET request to http://example.com:3000/foo/bar
-model.fetch({
-    protocol: 'http',
-    hostname: 'example.com',
-    port: 3000,
-    path: '/foo/bar'
-}, function (err, data, responseTime) {
+const model = new Model();
+model.delete((err, data, responseTime) => {
     console.log(data);
 });
 ```
