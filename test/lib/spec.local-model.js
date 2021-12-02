@@ -1,13 +1,11 @@
 'use strict';
 
-describe('Local Model', () => {
+const Model = require('../../lib/local-model');
 
+describe('Local Model', () => {
     let model;
 
     beforeEach(() => {
-
-        let Model = require('../../lib/local-model');
-
         model = new Model();
     });
 
@@ -18,7 +16,7 @@ describe('Local Model', () => {
     });
 
     it('has an attributes property of type object', () => {
-        model.attributes.should.be.a('object');
+        expect(model.attributes).to.be.an('object');
     });
 
     describe('constructor', () => {
@@ -54,20 +52,28 @@ describe('Local Model', () => {
     describe('set', () => {
 
         beforeEach(() => {
-            model.attributes = {
-                name: 'Test name'
-            };
+            model = new Model({ name: 'Test name' });
         });
 
         it('adds a key to the model attributes if the key is a string', () => {
-            model.set('age', 20).attributes.should.eql({
+            model.set('age', 20);
+            expect(model.attributes).to.eql({
                 name: 'Test name',
                 age: 20
             });
         });
 
         it('accepts an object as the key', () => {
-            model.set( { placeOfBirth: 'London' } ).attributes.should.eql({
+            model.set( { placeOfBirth: 'London' } );
+            expect(model.attributes).to.eql({
+                name: 'Test name',
+                placeOfBirth: 'London'
+            });
+        });
+
+        it('accepts a Map as the key', () => {
+            model.set( new Map([['placeOfBirth', 'London']]));
+            expect(model.attributes).to.eql({
                 name: 'Test name',
                 placeOfBirth: 'London'
             });
@@ -141,17 +147,17 @@ describe('Local Model', () => {
 
         it('removes properties from model when passed a string', () => {
             model.unset('a');
-            model.toJSON().should.eql({ b: 2, c: 3 });
+            expect(model.toJSON()).to.eql({ b: 2, c: 3 });
         });
 
         it('removes properties from model when passed an array', () => {
             model.unset(['a', 'b']);
-            model.toJSON().should.eql({ c: 3 });
+            expect(model.toJSON()).to.eql({ c: 3 });
         });
 
         it('does nothing if passed a property that does not exist', () => {
             model.unset('foo');
-            model.toJSON().should.eql({ a: 1, b: 2, c: 3 });
+            expect(model.toJSON()).to.eql({ a: 1, b: 2, c: 3 });
         });
 
         it('emits a change event', () => {
@@ -225,7 +231,7 @@ describe('Local Model', () => {
 
         it('clears model attributes', () => {
             model.reset();
-            model.toJSON().should.eql({});
+            expect(model.toJSON()).to.eql({});
             expect(model.get('name')).to.be.undefined;
             expect(model.get('age')).to.be.undefined;
         });
@@ -244,9 +250,9 @@ describe('Local Model', () => {
             model.on('change:age', listener2);
             model.reset();
             listener1.should.have.been.calledOnce;
-            listener1.should.have.been.calledWithExactly(undefined);
+            listener1.should.have.been.calledWithExactly(undefined, 'John');
             listener2.should.have.been.calledOnce;
-            listener2.should.have.been.calledWithExactly(undefined);
+            listener2.should.have.been.calledWithExactly(undefined, 30);
         });
 
         it('emits no events if called with silent: true', () => {
@@ -266,10 +272,22 @@ describe('Local Model', () => {
             };
         });
 
-        it('returns an object that\'s the same as the attributes property', () => {
-            model.toJSON().should.eql({
+        it('returns a bare object that\'s the same as the attributes property', () => {
+            const result = model.toJSON(true);
+            expect(result).to.eql({
                 name: 'Test name'
             });
+
+            expect(result.constructor).to.be.undefined;
+        });
+
+        it('returns an object that\'s the same as the attributes property with object prototype', () => {
+            const result = model.toJSON();
+            expect(result).to.eql({
+                name: 'Test name'
+            });
+
+            expect(result.constructor).to.be.a('function');
         });
     });
 
