@@ -2,7 +2,6 @@
 
 const Model = require('../../lib/remote-model');
 const BaseModel = require('../../lib/local-model');
-const _ = require('underscore');
 const logger = require('hmpo-logger');
 
 const { HttpProxyAgent, HttpsProxyAgent } = require('hpagent');
@@ -543,7 +542,7 @@ describe('Remote Model', () => {
                 }
             };
 
-            let savedConfig = _.clone(config);
+            let savedConfig = Object.assign({}, config);
 
             let returnedConfig = model.requestConfig(config);
 
@@ -573,7 +572,7 @@ describe('Remote Model', () => {
                 method: 'VERB'
             };
 
-            requestSettings = _.clone(settings);
+            requestSettings = Object.assign({}, settings);
         });
 
         afterEach(() => {
@@ -908,6 +907,11 @@ describe('Remote Model', () => {
         it('sets the parsed data to the model', () => {
             model.parse({ foo: 'bar' });
             model.get('foo').should.equal('bar');
+        });
+
+        it('sets the parsed array data to the model as "data"', () => {
+            model.parse([1, 2, 3, 4]);
+            model.get('data').should.eql([1, 2, 3, 4]);
         });
 
         it('does not set if the data falsey', () => {
