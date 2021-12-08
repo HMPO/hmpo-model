@@ -1,6 +1,7 @@
 'use strict';
 
 const Model = require('../../lib/remote-model');
+const ModelError = require('../../lib/model-error');
 const BaseModel = require('../../lib/local-model');
 const logger = require('hmpo-logger');
 
@@ -649,9 +650,16 @@ describe('Remote Model', () => {
                     settings: settings,
                     statusCode: 418,
                     responseTime: sinon.match.number,
-                    err: error,
+                    err: sinon.match.instanceOf(ModelError),
                     data: null
                 });
+                model.logError.args[0][0].err.should.include({
+                    name: 'Error',
+                    message: 'Error: Lorem Ipsum',
+                    status: 418,
+                    info: undefined,
+                });
+                model.logError.args[0][0].err.stack.should.be.a('string');
             });
 
             it('should emit a fail event', () => {
@@ -659,15 +667,17 @@ describe('Remote Model', () => {
 
                 model.emit.should.have.been.calledWithExactly(
                     'fail',
-                    sinon.match({
-                        message: error.message,
-                        status: 418
-                    }),
+                    sinon.match.instanceOf(ModelError),
                     null,
                     settings,
                     418,
                     sinon.match.number
                 );
+                model.emit.args[1][1].should.include({
+                    name: 'Error',
+                    message: 'Error: Lorem Ipsum',
+                    status: 418,
+                });
             });
 
             it('should translate timeout errors with status codes', () => {
@@ -679,10 +689,13 @@ describe('Remote Model', () => {
                     settings: settings,
                     statusCode: 504,
                     responseTime: sinon.match.number,
-                    err: sinon.match({
-                        message: 'Connection timed out'
-                    }),
+                    err: sinon.match.instanceOf(ModelError),
                     data: null
+                });
+                model.logError.args[0][0].err.should.include({
+                    name: 'Error',
+                    message: 'Connection timed out',
+                    status: 504
                 });
             });
 
@@ -695,11 +708,13 @@ describe('Remote Model', () => {
                     settings: settings,
                     statusCode: 503,
                     responseTime: sinon.match.number,
-                    err: sinon.match({
-                        message: error.message,
-                        status: 503,
-                    }),
+                    err: sinon.match.instanceOf(ModelError),
                     data: null
+                });
+                model.logError.args[0][0].err.should.include({
+                    name: 'Error',
+                    message: 'Error: Lorem Ipsum',
+                    status: 503
                 });
             });
 
@@ -713,11 +728,44 @@ describe('Remote Model', () => {
                     settings: settings,
                     statusCode: 418,
                     responseTime: sinon.match.number,
-                    err: error,
+                    err: sinon.match.instanceOf(ModelError),
                     data: null
                 });
                 hook.should.have.been.calledOn(model);
             });
+
+            it('should handle response for ERR_NON_2XX_3XX_RESPONSE errors', () => {
+                error.code = 'ERR_NON_2XX_3XX_RESPONSE';
+                error.response = {
+                    'body': JSON.stringify({'data': 'value'}),
+                    'statusCode': 404
+                };
+
+                model.request(settings, cb);
+                console.log(model.logError.args[0][0]);
+                model.logError.should.have.been.calledWithExactly({
+                    settings: settings,
+                    statusCode: 404,
+                    responseTime: sinon.match.number,
+                    err: {
+                        status: 404,
+                        data: 'value'
+                    },
+                    data: { data: 'value' }
+                });
+
+                cb.should.have.been.calledWithExactly(
+                    {
+                        status: 404,
+                        data: 'value'
+                    },
+                    {
+                        data: 'value'
+                    },
+                    sinon.match.number
+                );
+            });
+
         });
 
         context('on success', () => {
