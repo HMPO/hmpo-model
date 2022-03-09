@@ -5,7 +5,8 @@ const ModelError = require('../../lib/model-error');
 const BaseModel = require('../../lib/local-model');
 const logger = require('hmpo-logger');
 
-const { HttpProxyAgent, HttpsProxyAgent } = require('hpagent');
+const HttpsProxyAgent = require('https-proxy-agent');
+const HttpProxyAgent = require('http-proxy-agent');
 
 describe('Remote Model', () => {
     let model, cb, mocks;
@@ -71,7 +72,7 @@ describe('Remote Model', () => {
         });
 
         it('should use console log and a trimHtml pass-through if hmpo-logger is not available', () => {
-            logger.get.throws(new Error());
+            logger.get.throws({ message: 'test error' });
 
             model = new Model();
 
@@ -431,17 +432,41 @@ describe('Remote Model', () => {
                     'method': 'VERB',
                     'url': 'http://example.net',
                     'proxy': {
-                        proxy: 'http://proxy.example.com:8000',
-                        keepAlive: true
+                        uri: 'http://proxy.example.com:8000',
+                        keepAlive: true,
+                        maxSockets: 200
                     }
                 });
 
                 sinon.assert.match(returnedConfig, {
                     agent: {
                         http: {
-                            keepAlive: true
+                            proxy: {
+                                keepAlive: true,
+                                maxSockets: 200
+                            }
                         }
                     }
+                });
+            });
+
+            it('should process auth for the proxy', () => {
+                let agent;
+
+                agent = model.proxy('http://username:password@host:123/path', 'https://example.com');
+                sinon.assert.match(agent.https.proxy, {
+                    auth: 'username:password',
+                    host: 'host',
+                    port: 123,
+                    protocol: 'http:'
+                });
+
+                agent = model.proxy('http://username@host:123/path', 'https://example.com');
+                sinon.assert.match(agent.https.proxy, {
+                    auth: 'username',
+                    host: 'host',
+                    port: 123,
+                    protocol: 'http:'
                 });
             });
         });
@@ -742,7 +767,6 @@ describe('Remote Model', () => {
                 };
 
                 model.request(settings, cb);
-                console.log(model.logError.args[0][0]);
                 model.logError.should.have.been.calledWithExactly({
                     settings: settings,
                     statusCode: 404,
