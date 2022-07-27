@@ -67,19 +67,18 @@ describe('Remote Model', () => {
         it('should set up a new hmpo-logger', () => {
             model = new Model();
 
+            model.getLogger().should.equal('logger');
             logger.get.should.have.been.calledWithExactly(':remote-model');
-            model.logger.should.equal('logger');
         });
 
         it('should use console log and a trimHtml pass-through if hmpo-logger is not available', () => {
-            logger.get.throws({ message: 'test error' });
-
             model = new Model();
+            model.logger = null;
 
-            model.logger.outbound.should.eql(console.log);
-            model.logger.trimHtml.should.be.a('function');
+            model.getLogger().outbound.should.eql(console.log);
+            model.getLogger().trimHtml.should.be.a('function');
             const html = {};
-            model.logger.trimHtml(html).should.equal(html);
+            model.getLogger().trimHtml(html).should.equal(html);
         });
     });
 
