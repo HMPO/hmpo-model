@@ -18,7 +18,7 @@
   "author": "PEX",
   "license": "MIT",
   "engines": {
-    "node": ">=10"
+    "node": ">=14"
   },
   "bugs": {
     "url": "https://github.com/UKHomeOffice/passports-model/issues"
@@ -34,11 +34,11 @@
   "devDependencies": {
     "chai": "^4.3.6",
     "eslint": "^8.18.0",
-    "hmpo-logger": "^6.1.0",
+    "hmpo-logger": "^7.0.0",
     "mocha": "^10.0.0",
     "nyc": "^15.1.0",
     "proxyquire": "^2.0.0",
-    "sinon": "^14.0.0",
+    "sinon": "^15.0.4",
     "sinon-chai": "^3.7.0"
   },
   "nyc": {
