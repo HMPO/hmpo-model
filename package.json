@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/UKHomeOffice/passports-model.git"
+    "url": "https://github.com/HMPO/hmpo-model.git"
   },
   "author": "PEX",
   "license": "MIT",
@@ -21,24 +21,24 @@
     "node": ">=14"
   },
   "bugs": {
-    "url": "https://github.com/UKHomeOffice/passports-model/issues"
+    "url": "https://github.com/HMPO/hmpo-model/issues"
   },
-  "homepage": "https://github.com/UKHomeOffice/passports-model",
+  "homepage": "https://github.com/HMPO/hmpo-model#readme",
   "dependencies": {
-    "debug": "^4.3.4",
+    "debug": "^4.3.6",
     "got": "<12",
     "http-proxy-agent": "^5.0.0",
     "https-proxy-agent": "^5.0.1",
     "lodash.kebabcase": "^4.1.1"
   },
   "devDependencies": {
-    "chai": "^4.3.6",
-    "eslint": "^8.18.0",
-    "hmpo-logger": "^7.0.0",
-    "mocha": "^10.0.0",
-    "nyc": "^15.1.0",
+    "chai": "^4.5.0",
+    "eslint": "^8.57.0",
+    "hmpo-logger": "^7.0.2",
+    "mocha": "^10.7.0",
+    "nyc": "^17.0.0",
     "proxyquire": "^2.0.0",
-    "sinon": "^15.0.4",
+    "sinon": "^18.0.0",
     "sinon-chai": "^3.7.0"
   },
   "nyc": {
