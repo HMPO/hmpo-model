@@ -4,9 +4,10 @@ const Model = require('../../lib/remote-model');
 const ModelError = require('../../lib/model-error');
 const BaseModel = require('../../lib/local-model');
 const logger = require('hmpo-logger');
+const { expect } = require('chai');
 
-const HttpsProxyAgent = require('https-proxy-agent');
-const HttpProxyAgent = require('http-proxy-agent');
+const { HttpProxyAgent }  = require('http-proxy-agent');
+const { HttpsProxyAgent }  = require('https-proxy-agent');
 
 describe('Remote Model', () => {
     let model, cb, mocks;
@@ -400,16 +401,12 @@ describe('Remote Model', () => {
 
             it('should set up http proxy if specified', () => {
                 const returnedConfig = model.requestConfig({
-                    'method': 'VERB',
-                    'url': 'http://example.net',
-                    'proxy': 'http://proxy.example.com:8000'
+                    method: 'VERB',
+                    url: 'http://example.net',
+                    proxy: 'http://proxy.example.com:8000'
                 });
 
-                sinon.assert.match(returnedConfig, {
-                    agent: {
-                        http: sinon.match.instanceOf(HttpProxyAgent)
-                    }
-                });
+                expect(returnedConfig.agent.http).to.be.an.instanceOf(HttpProxyAgent);
             });
 
             it('should set up https proxy if specified', () => {
@@ -428,46 +425,56 @@ describe('Remote Model', () => {
 
             it('should pass proxy options to the new proxy', () => {
                 const returnedConfig = model.requestConfig({
-                    'method': 'VERB',
-                    'url': 'http://example.net',
-                    'proxy': {
+                    method: 'VERB',
+                    url: 'http://example.net',
+                    proxy: {
                         uri: 'http://proxy.example.com:8000',
                         keepAlive: true,
                         maxSockets: 200
                     }
                 });
 
-                sinon.assert.match(returnedConfig, {
-                    agent: {
-                        http: {
-                            proxy: {
-                                keepAlive: true,
-                                maxSockets: 200
-                            }
-                        }
-                    }
-                });
+                const agent = returnedConfig.agent.http;
+                expect(agent).to.be.instanceOf(require('http').Agent);
+                expect(agent.keepAlive).to.equal(true);
+                expect(agent.maxSockets).to.equal(200);
             });
+
 
             it('should process auth for the proxy', () => {
                 let agent;
 
                 agent = model.proxy('http://username:password@host:123/path', 'https://example.com');
                 sinon.assert.match(agent.https.proxy, {
-                    auth: 'username:password',
-                    host: 'host',
-                    port: 123,
-                    protocol: 'http:'
+                    href: 'http://username:password@host:123/path',
+                    origin: 'http://host:123',
+                    protocol: 'http:',
+                    username: 'username',
+                    password: 'password',
+                    host: 'host:123',
+                    hostname: 'host',
+                    port: '123',
+                    pathname: '/path',
+                    search: '',
+                    hash: ''
                 });
 
                 agent = model.proxy('http://username@host:123/path', 'https://example.com');
                 sinon.assert.match(agent.https.proxy, {
-                    auth: 'username',
-                    host: 'host',
-                    port: 123,
-                    protocol: 'http:'
+                    href: 'http://username@host:123/path',
+                    origin: 'http://host:123',
+                    protocol: 'http:',
+                    username: 'username',
+                    password: '',
+                    host: 'host:123',
+                    hostname: 'host',
+                    port: '123',
+                    pathname: '/path',
+                    search: '',
+                    hash: ''
                 });
             });
+
         });
 
         describe('with headers supplied into the constructor', () => {
