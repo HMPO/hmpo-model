@@ -1,6 +1,7 @@
 'use strict';
 
 const Model = require('../../lib/local-model');
+const { expect } = require('chai');
 
 describe('Local Model', () => {
     let model;
