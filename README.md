@@ -93,7 +93,7 @@ There are three methods for API interaction corresponding to GET, POST, and DELE
 
 ### `fetch([args], [callback])`
 
-* `fetch` performs a `GET` request on the url
+`fetch` performs a `GET` request on the url
 
 ```javascript
 const model = new Model();
