@@ -91,9 +91,11 @@ model.save((err, data, responseTime) => {
 
 There are three methods for API interaction corresponding to GET, POST, and DELETE http methods:
 
-### `fetch([args], [callback])`
+### `fetch(args?, callback)`
 
 `fetch` performs a `GET` request on the url
+
+* If no args passed / function passed as only paramater, then args will be set to undefined.
 
 ```javascript
 const model = new Model();
@@ -121,9 +123,11 @@ This behaviour can be changed by overriding the `parse(data):data` method.
 * If response statuses need to be treated differently than the above, the `parseResponse(statusCode, data, cb)` method can be overridden.
 * If the response body is not going to be JSON, the `handleResponse(response, cb)` method can be overridden.
 
-### `save([args], [callback])`
+### `save(args?, callback)`
 
 `save` performs a `POST` request on the url
+
+* If no args passed / function passed as only paramater, then args will be set to undefined.
 
 ```javascript
 const model = new Model();
@@ -138,9 +142,11 @@ model.save((err, data, responseTime) => {
 * By default the post body will be a JSON encoded object containing all attributes set to the model using, extracted using `model.toJSON()`. This behaviour can be changed by overriding the `prepare(callback(err, data))` method.
 * The response and body will be treated the same way as the `fetch` request above.
 
-### `delete([args], [callback])`
+### `delete(args?, callback)`
 
 `delete` performs a `DELETE` request on the url
+
+* If no args passed / function passed as only paramater, then args will be set to undefined.
 
 ```javascript
 const model = new Model();
