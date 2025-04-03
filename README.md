@@ -17,26 +17,26 @@ The `request` method no longer takes a body. This should be inserted as `json`, 
 
 * Gets a model property via a key.
 
-### `set(key, value, [options])` or `set({ key: value }, [options])`
+### `set(key, value, options?)` or `set({ key: value }, options?)`
 
 * Sets a property on the model to a value and dispatches events.
 * Suppresses `change` event notifications if `options.silent` is set. e.g. `set(key, value, {silent: true})`.
 
-### `unset(fields, [options])`
+### `unset(fields, options?)`
 
 * Unsets a field or fields. `fields` can be passed as a string or an array. If `fields` is of type `'string'` it will be wrapped in an array with this string as its single element.
 * Suppresses `change` event notifications if `options.silent` is set. E.g. `unset(fields, {silent: true})`.
 
-### `reset([options])`
+### `reset(options?)`
 
 * Resets a model.
 * Suppresses `change` event notifications if `options.silent` is set. E.g. `reset({silent: true})`.
 
-### `increment(propertyName, [amount])`
+### `increment(propertyName, amount?)`
 
 * Increments a property by the specified amount. Amount defaults to 1 if not provided.
 
-### `toJSON([bare])`
+### `toJSON(bare?)`
 
 * Returns a JSON representation of the data in the model.
 * Optional paramter `bare` can be set to `true` or `false`. Defaults to `false`.
