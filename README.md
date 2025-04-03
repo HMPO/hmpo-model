@@ -20,17 +20,17 @@ The `request` method no longer takes a body. This should be inserted as `json`, 
 ### `set(key, value, [options])` or `set({ key: value }, [options])`
 
 * Sets a property on the model to a value and dispatches events.
-* * suppresses `change` event notifications if `options.silent` is set. e.g. `reset({silent: true})`
+* Suppresses `change` event notifications if `options.silent` is set. e.g. `reset({silent: true})`.
 
 ### `unset(fields, [options])`
 
 * Unsets a field or fields. `fields` can be passed as a string or an array. If `fields` is of type `'string'` it will be wrapped in an array with this string as its single element.
-* Suppresses `change` event notifications if `options.silent` is set. E.g. `reset({silent: true})`
+* Suppresses `change` event notifications if `options.silent` is set. E.g. `reset({silent: true})`.
 
 ### `reset([options])`
 
 * Resets a model.
-* Suppresses `change` event notifications if `options.silent` is set. E.g. `reset({silent: true})`
+* Suppresses `change` event notifications if `options.silent` is set. E.g. `reset({silent: true})`.
 
 ### `increment(propertyName, [amount])`
 
