@@ -202,3 +202,8 @@ options.hooks.success({ data, settings, statusCode, responseTime });
 ```javascript
 options.hooks.fail({ err, data, settings, statusCode, responseTime });
 ```
+
+## Examples in other apps
+
+[hmpo-form-wizard example : Submit Model](https://github.com/HMPO/hmpo-form-wizard/blob/master/example/models/submit.js)
+[hmpo-app example : Submission Model](https://github.com/HMPO/hmpo-app/blob/master/example/models/submission.js)
