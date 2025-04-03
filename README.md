@@ -13,6 +13,13 @@ The `request` method no longer takes a body. This should be inserted as `json`, 
 
 ## Local Model Usage
 
+### `constructor(attributes?, options?)`
+
+* Local Model extends the Node.JS EventEmitter. The constructor will first call the super constructor of EventEmitter, then assign the options and attributes.
+* If no `options` provided, this will default to an empty object `{}`.
+* `attributes` is first assigned an empty object without inheriting properties from `Object.prototype`. e.g. `this.attributes = Object.create(null);`.
+* If `attributes` are provided then the `attributes` object is set, with `change` event notifications suppressed.
+
 ### `get(key)`
 
 * Gets a model property via a key.
