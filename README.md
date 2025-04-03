@@ -44,6 +44,8 @@ The `request` method no longer takes a body. This should be inserted as `json`, 
 
 ## Remote Model Usage
 
+The Remote Model is a sub-class of the previously highlighted Local Model, and as such inherits its constructor and property accessors.
+
 Normally this would be used as an abstract class and extended with your own implementation.
 
 Implementations would normally define at least a `url():url` method to define the target of API calls.
